@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { PortalSwitcher } from './components/PortalSwitcher';
+import { PortalSwitcher, PortalMode } from './components/PortalSwitcher';
 import { B2CApp } from './apps/b2c/B2CApp';
 import { B2BDashboard } from './apps/b2b/B2BDashboard';
+import { MutationHub } from './apps/mutation/MutationHub';
 import { 
   BUSINESS_TENANTS, 
   INITIAL_SPECIALISTS, 
@@ -13,15 +14,15 @@ import { Appointment, DashboardMetrics } from './types';
 import { Wifi, Battery, Signal } from 'lucide-react';
 
 export const App: React.FC = () => {
-  const [currentPortal, setCurrentPortal] = useState<'b2c' | 'b2b'>('b2c');
+  const [currentPortal, setCurrentPortal] = useState<PortalMode>('b2c');
   const [selectedTenantId, setSelectedTenantId] = useState<string>('urban-barberia');
   const [phoneFrameMode, setPhoneFrameMode] = useState<boolean>(true);
   
-  const [specialists, setSpecialists] = useState(INITIAL_SPECIALISTS);
-  const [services, setServices] = useState(INITIAL_SERVICES);
+  const [specialists] = useState(INITIAL_SPECIALISTS);
+  const [services] = useState(INITIAL_SERVICES);
   const [metrics, setMetrics] = useState<DashboardMetrics>(INITIAL_METRICS);
-  const [stockAlerts, setStockAlerts] = useState(INITIAL_STOCK_ALERTS);
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [stockAlerts] = useState(INITIAL_STOCK_ALERTS);
+  const [, setAppointments] = useState<Appointment[]>([]);
 
   const currentTenant = BUSINESS_TENANTS.find((t) => t.id === selectedTenantId) || BUSINESS_TENANTS[0];
 
@@ -50,8 +51,15 @@ export const App: React.FC = () => {
         onTogglePhoneFrame={() => setPhoneFrameMode(!phoneFrameMode)}
       />
 
-      {/* Dynamic View rendering */}
-      {currentPortal === 'b2b' ? (
+      {/* Dynamic View rendering based on mode */}
+      {currentPortal === 'mutation_hub' ? (
+        <div className="flex-1 w-full">
+          <MutationHub
+            onSelectTenant={setSelectedTenantId}
+            onNavigateTo={(portal) => setCurrentPortal(portal)}
+          />
+        </div>
+      ) : currentPortal === 'b2b' ? (
         <div className="flex-1 w-full">
           <B2BDashboard
             tenant={currentTenant}

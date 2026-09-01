@@ -3,8 +3,9 @@ import {
   BarChart3, Users, DollarSign, AlertTriangle, ShieldAlert, 
   Sparkles, RefreshCw, CheckCircle2, ChevronRight, Power, 
   Sliders, Plus, Store, Scissors, ArrowUpRight, TrendingUp,
-  Clock, Package, CreditCard, Bell
+  Clock, Package, CreditCard, Bell, Monitor, Check, Eye
 } from 'lucide-react';
+import { ElevateLogo } from '../../components/ElevateLogo';
 import { BusinessTenant, Specialist, ServiceItem, InventoryAlert, DashboardMetrics } from '../../types';
 
 interface B2BDashboardProps {
@@ -26,143 +27,209 @@ export const B2BDashboard: React.FC<B2BDashboardProps> = ({
 }) => {
   const [killSwitchActive, setKillSwitchActive] = useState(false);
   const [promoApproved, setPromoApproved] = useState(false);
-  const [activeSection, setActiveSection] = useState<'cockpit' | 'onboarding' | 'staff' | 'inventario' | 'stripe'>('cockpit');
+  const [showMonitorFrame, setShowMonitorFrame] = useState(true);
   const [onboardingStep, setOnboardingStep] = useState<number>(5);
 
-  const timelineHours = ['09:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '01:00 PM', '03:00 PM'];
+  const timelineHours = ['9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '1:00 PM', '3:00 PM'];
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col circuit-bg">
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col circuit-bg pb-12">
       
-      {/* 1. Header B2B Cockpit */}
-      <header className="border-b border-slate-800 bg-slate-900/80 backdrop-blur-md px-6 py-4 sticky top-0 z-30 flex flex-wrap items-center justify-between gap-4">
+      {/* 1. Header B2B Cockpit (Image 1 Header) */}
+      <header className="border-b border-slate-800 bg-slate-900/90 backdrop-blur-md px-6 py-4 sticky top-0 z-30 flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-slate-950 font-black shadow-lg shadow-cyan-500/20">
-            <Scissors className="w-5 h-5 text-white" />
-          </div>
+          <ElevateLogo />
+          <div className="h-6 w-px bg-slate-800 hidden sm:block"></div>
           <div>
-            <div className="flex items-center gap-2">
-              <span className="font-mono text-xs uppercase tracking-widest text-cyan-400 font-bold">ELEVATE NODE B2B</span>
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">Cockpit Socio</span>
-            </div>
-            <h1 className="text-lg font-black tracking-tight text-white">{tenant.name}</h1>
+            <h1 className="text-sm font-black tracking-tight text-white uppercase">
+              ARQUITECTURA DE FLUJO DE PANTALLAS SaaS B2B - ELEVATE NODE: {tenant.name.split(':')[0]}
+            </h1>
+            <p className="text-[11px] text-cyan-400 font-semibold tracking-wider uppercase">
+              Panel Operativo del Socio • Supabase Cloud & Vercel
+            </p>
           </div>
         </div>
 
-        {/* Status bar and Kill Switch */}
+        {/* Action controls */}
         <div className="flex items-center gap-3">
-          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800 text-xs">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-            <span className="text-slate-300 font-medium">Real-Time Sync: Activo</span>
-          </div>
+          <button
+            onClick={() => setShowMonitorFrame(!showMonitorFrame)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 font-bold border border-slate-700 transition"
+          >
+            <Monitor className="w-3.5 h-3.5" />
+            <span>{showMonitorFrame ? 'Modo Monitor ON' : 'Vista Completa'}</span>
+          </button>
 
-          {/* KILL SWITCH BOT BUTTON (From Image 1) */}
+          {/* KILL SWITCH BOT BUTTON (From Image 1 Bottom-Right) */}
           <button
             onClick={() => setKillSwitchActive(!killSwitchActive)}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-300 shadow-md ${
               killSwitchActive 
                 ? 'bg-rose-600 hover:bg-rose-500 text-white shadow-rose-600/30 animate-pulse' 
-                : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700'
+                : 'bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-black shadow-emerald-500/20'
             }`}
           >
             <Power className="w-4 h-4" />
-            <span>KILL SWITCH BOT: {killSwitchActive ? 'OFF (DETENIDO)' : 'ON (OPERANDO)'}</span>
+            <span>KILL SWITCH BOT: {killSwitchActive ? 'OFF (DETENIDO)' : 'ON (ACTIVO)'}</span>
           </button>
         </div>
       </header>
 
-      {/* Navigation Sub-bar */}
-      <div className="border-b border-slate-800/80 bg-slate-900/40 px-6 py-2 flex items-center gap-4 text-xs font-semibold overflow-x-auto">
-        <button 
-          onClick={() => setActiveSection('cockpit')}
-          className={`px-3 py-1.5 rounded-lg transition ${activeSection === 'cockpit' ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 font-bold' : 'text-slate-400 hover:text-white'}`}
-        >
-          Cockpit en Tiempo Real
-        </button>
-        <button 
-          onClick={() => setActiveSection('onboarding')}
-          className={`px-3 py-1.5 rounded-lg transition ${activeSection === 'onboarding' ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 font-bold' : 'text-slate-400 hover:text-white'}`}
-        >
-          Flujo de Onboarding (5 Pasos)
-        </button>
-        <button 
-          onClick={() => setActiveSection('staff')}
-          className={`px-3 py-1.5 rounded-lg transition ${activeSection === 'staff' ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 font-bold' : 'text-slate-400 hover:text-white'}`}
-        >
-          Staff & Rendimiento
-        </button>
-        <button 
-          onClick={() => setActiveSection('inventario')}
-          className={`px-3 py-1.5 rounded-lg transition ${activeSection === 'inventario' ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 font-bold' : 'text-slate-400 hover:text-white'}`}
-        >
-          Inventario & Stock
-        </button>
-        <button 
-          onClick={() => setActiveSection('stripe')}
-          className={`px-3 py-1.5 rounded-lg transition ${activeSection === 'stripe' ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 font-bold' : 'text-slate-400 hover:text-white'}`}
-        >
-          Contabilidad & Stripe
-        </button>
-      </div>
-
       {/* Main Container */}
-      <main className="flex-1 p-6 space-y-6 max-w-7xl mx-auto w-full">
+      <main className="flex-1 p-4 sm:p-6 space-y-8 max-w-7xl mx-auto w-full">
         
-        {/* SECTION: COCKPIT REAL-TIME */}
-        {activeSection === 'cockpit' && (
-          <div className="space-y-6">
+        {/* 2. FLUJO DE ONBOARDING DEL SOCIO (5 Pantallas exactas de la Imagen 1) */}
+        <section className="p-5 rounded-3xl bg-slate-900/80 border border-slate-800 shadow-2xl space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+            <div>
+              <span className="text-[10px] font-bold text-amber-400 uppercase tracking-widest block">Proceso de Activación</span>
+              <h2 className="text-sm font-black text-white uppercase tracking-wider">
+                FLUJO DE ONBOARDING [cite: 3]
+              </h2>
+            </div>
+            <span className="text-xs text-slate-400 font-semibold">5 Fases de Configuración</span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-3 text-xs">
             
-            {/* Top Stat Cards (From Image 1 & 2) */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-lg">
-                <span className="text-xs font-semibold text-slate-400">Total Día's Revenue</span>
-                <div className="text-2xl font-black text-amber-400 mt-1">${metrics.dailyRevenue} USD</div>
-                <div className="text-[11px] text-emerald-400 flex items-center gap-1 mt-1 font-semibold">
-                  <TrendingUp className="w-3.5 h-3.5" /> +18.4% vs semana pasada
+            {/* 1. Registro de Socio (Supabase Auth) */}
+            <div 
+              onClick={() => setOnboardingStep(1)}
+              className={`p-3.5 rounded-2xl border cursor-pointer transition flex flex-col justify-between ${
+                onboardingStep === 1 ? 'border-cyan-400 bg-cyan-950/40 text-white shadow-lg' : 'border-slate-800 bg-slate-950/70 text-slate-400 hover:border-slate-700'
+              }`}
+            >
+              <div>
+                <span className="text-[10px] font-black text-cyan-400 block mb-1">1. REGISTRO DE SOCIO</span>
+                <h4 className="font-bold text-white text-xs">(SUPABASE AUTH)</h4>
+                <div className="mt-3 p-2 bg-slate-900 rounded-lg space-y-1 text-[10px]">
+                  <div className="text-slate-300">Google / Custom OAuth</div>
+                  <div className="text-emerald-400 font-bold">✓ Conectado</div>
                 </div>
               </div>
-
-              <div className="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-lg">
-                <span className="text-xs font-semibold text-slate-400">Gross Revenue Acumulado</span>
-                <div className="text-2xl font-black text-white mt-1">${metrics.grossRevenue.toFixed(2)} MXN</div>
-                <div className="text-[11px] text-slate-400 mt-1">Comisiones retenidas: ${metrics.commissions}</div>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-lg">
-                <span className="text-xs font-semibold text-slate-400">Tasa de Retención Staff</span>
-                <div className="text-2xl font-black text-cyan-400 mt-1">{metrics.staffRetentionRate}%</div>
-                <div className="text-[11px] text-slate-400 mt-1">Duración promedio: {metrics.avgServiceDuration}m</div>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-lg">
-                <span className="text-xs font-semibold text-slate-400">Estatus de Puestos</span>
-                <div className="text-sm font-bold text-white mt-2">Carlos, Luis, Luis (Puesto 001)</div>
-                <div className="text-[11px] text-emerald-400 font-semibold mt-1">3 Barberos activos en vivo</div>
-              </div>
+              <span className="text-[9px] text-slate-500 mt-2">[cite: 3]</span>
             </div>
 
-            {/* Central Timeline Table (Direct reproduction from Image 1 Cockpit) */}
-            <div className="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-xl space-y-4">
-              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
-                <div>
-                  <h2 className="text-sm font-extrabold text-white uppercase tracking-wider flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-cyan-400" /> Cockpit de Operación Real-Time
-                  </h2>
-                  <p className="text-xs text-slate-400">Timeline de agenda y disponibilidad de especialistas</p>
+            {/* 2. Configuración del Local & CLABE */}
+            <div 
+              onClick={() => setOnboardingStep(2)}
+              className={`p-3.5 rounded-2xl border cursor-pointer transition flex flex-col justify-between ${
+                onboardingStep === 2 ? 'border-cyan-400 bg-cyan-950/40 text-white shadow-lg' : 'border-slate-800 bg-slate-950/70 text-slate-400 hover:border-slate-700'
+              }`}
+            >
+              <div>
+                <span className="text-[10px] font-black text-cyan-400 block mb-1">2. CONFIGURACIÓN</span>
+                <h4 className="font-bold text-white text-xs">DEL LOCAL & CLABE</h4>
+                <div className="mt-3 p-2 bg-slate-900 rounded-lg space-y-1 text-[10px]">
+                  <div className="text-slate-300">Calle 50, Centro, CDMX</div>
+                  <div className="text-amber-400 font-mono">CLABE: 01218000123...</div>
                 </div>
-                <div className="flex items-center gap-2 text-xs">
-                  <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Libre</span>
-                  <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-rose-500"></span> En Cita</span>
-                  <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span> Descanso</span>
+              </div>
+              <span className="text-[9px] text-slate-500 mt-2">[cite: 3]</span>
+            </div>
+
+            {/* 3. Alta de Personal (Barberos) */}
+            <div 
+              onClick={() => setOnboardingStep(3)}
+              className={`p-3.5 rounded-2xl border cursor-pointer transition flex flex-col justify-between ${
+                onboardingStep === 3 ? 'border-cyan-400 bg-cyan-950/40 text-white shadow-lg' : 'border-slate-800 bg-slate-950/70 text-slate-400 hover:border-slate-700'
+              }`}
+            >
+              <div>
+                <span className="text-[10px] font-black text-cyan-400 block mb-1">3. ALTA DE PERSONAL</span>
+                <h4 className="font-bold text-white text-xs">(BARBEROS)</h4>
+                <div className="mt-3 p-2 bg-slate-900 rounded-lg space-y-1 text-[10px]">
+                  <div className="text-slate-300">Añadir Barbero Modal</div>
+                  <div className="text-cyan-400">{specialists.length} Miembros Activos</div>
+                </div>
+              </div>
+              <span className="text-[9px] text-slate-500 mt-2">[cite: 3]</span>
+            </div>
+
+            {/* 4. Definición de Servicios */}
+            <div 
+              onClick={() => setOnboardingStep(4)}
+              className={`p-3.5 rounded-2xl border cursor-pointer transition flex flex-col justify-between ${
+                onboardingStep === 4 ? 'border-cyan-400 bg-cyan-950/40 text-white shadow-lg' : 'border-slate-800 bg-slate-950/70 text-slate-400 hover:border-slate-700'
+              }`}
+            >
+              <div>
+                <span className="text-[10px] font-black text-cyan-400 block mb-1">4. DEFINICIÓN</span>
+                <h4 className="font-bold text-white text-xs">DE SERVICIOS</h4>
+                <div className="mt-3 p-2 bg-slate-900 rounded-lg space-y-1 text-[10px]">
+                  <div className="text-slate-300">Tarifas & Tiempos (min)</div>
+                  <div className="text-cyan-400">{services.length} Servicios en catálogo</div>
+                </div>
+              </div>
+              <span className="text-[9px] text-slate-500 mt-2">[cite: 3]</span>
+            </div>
+
+            {/* 5. Lanzamiento & Mutación (Exact Highlight from Image 1) */}
+            <div 
+              onClick={() => setOnboardingStep(5)}
+              className={`p-3.5 rounded-2xl border cursor-pointer transition flex flex-col justify-between ${
+                onboardingStep === 5 ? 'border-amber-400 bg-gradient-to-br from-cyan-950/60 via-slate-900 to-amber-950/40 text-white shadow-xl shadow-amber-500/20' : 'border-slate-800 bg-slate-950/70 text-slate-400 hover:border-slate-700'
+              }`}
+            >
+              <div>
+                <span className="text-[10px] font-black text-amber-400 block mb-1">5. LANZAMIENTO</span>
+                <h4 className="font-bold text-white text-xs">& MUTACIÓN</h4>
+                <div className="mt-3 p-2 bg-slate-900/90 border border-amber-500/40 rounded-lg text-center">
+                  <span className="text-[10px] font-black text-amber-300 uppercase">
+                    CONFIRMAR & MUTAR APP B2C 👆
+                  </span>
+                </div>
+              </div>
+              <span className="text-[9px] text-slate-500 mt-2">[cite: 3]</span>
+            </div>
+
+          </div>
+        </section>
+
+        {/* 3. COCKPIT DE OPERACIÓN REAL-TIME (Centro de la Imagen 1 en Monitor) */}
+        <section className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-black text-white uppercase tracking-wider flex items-center gap-2">
+              <Clock className="w-4 h-4 text-cyan-400" /> COCKPIT DE OPERACIÓN REAL-TIME [cite: 2]
+            </h2>
+            <span className="text-xs text-emerald-400 font-semibold flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              Sincronización en Vivo
+            </span>
+          </div>
+
+          {/* Desktop Monitor Frame Presentation (Matching Image 1) */}
+          <div className={showMonitorFrame ? "p-4 sm:p-8 bg-slate-900/40 border border-slate-800 rounded-3xl" : ""}>
+            <div className={`p-5 rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl space-y-5 ${showMonitorFrame ? "border-t-[8px] border-slate-700 shadow-[0_20px_50px_rgba(0,0,0,0.8)]" : ""}`}>
+              
+              {/* Cockpit Top Bar */}
+              <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="text-xs font-black text-white">Barberos Disponibilidad</div>
+                  <span className="text-[10px] bg-slate-800 px-2 py-0.5 rounded text-slate-400 font-mono">
+                    Timeline 2
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-6">
+                  <div>
+                    <span className="text-[10px] text-slate-400 uppercase font-bold block">Total Día's Revenue</span>
+                    <span className="text-xl font-black text-amber-400">${metrics.dailyRevenue} USD</span>
+                  </div>
+
+                  <div>
+                    <span className="text-[10px] text-slate-400 uppercase font-bold block">Estatus de Puestos</span>
+                    <span className="text-xs font-bold text-white">Carlos, Luis, Luis <span className="text-cyan-400 font-mono">001</span></span>
+                  </div>
                 </div>
               </div>
 
-              {/* Timeline Grid */}
+              {/* Timeline Matrix Grid (Matching Image 1) */}
               <div className="overflow-x-auto">
                 <table className="w-full text-xs text-left">
                   <thead>
                     <tr className="border-b border-slate-800 text-slate-400">
-                      <th className="py-2.5 px-3 font-bold w-40">Barbero / Especialista</th>
+                      <th className="py-2.5 px-3 font-bold w-44">Barbero</th>
                       {timelineHours.map((hr) => (
                         <th key={hr} className="py-2.5 px-2 text-center font-semibold text-slate-300">{hr}</th>
                       ))}
@@ -176,40 +243,40 @@ export const B2BDashboard: React.FC<B2BDashboardProps> = ({
                           <div className="flex items-center gap-2.5">
                             <img src={spec.avatarUrl} alt={spec.name} className="w-8 h-8 rounded-full object-cover border border-slate-700" />
                             <div>
-                              <div className="font-bold text-white">{spec.name}</div>
-                              <div className="text-[10px] text-slate-400">{spec.role.split('/')[0]}</div>
+                              <div className="font-bold text-white text-xs">{spec.name}</div>
+                              <div className="text-[10px] text-slate-400 truncate max-w-[120px]">{spec.role.split('/')[0]}</div>
                             </div>
                           </div>
                         </td>
 
-                        {/* Timeline slots */}
+                        {/* Timeline slots matching Cyan, Red, Amber blocks */}
                         {spec.scheduleTimeline ? (
                           spec.scheduleTimeline.map((slot, sIdx) => (
                             <td key={sIdx} className="py-3 px-1 text-center">
-                              <span className={`inline-block w-full py-1 rounded text-[10px] font-bold ${
-                                slot.state === 'libre' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' :
-                                slot.state === 'en_servicio' ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40' :
+                              <span className={`inline-block w-full py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider ${
+                                slot.state === 'libre' ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm' :
+                                slot.state === 'en_servicio' ? 'bg-rose-600/30 text-rose-300 border border-rose-600/50 shadow-sm' :
                                 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
                               }`}>
-                                {slot.state === 'libre' ? 'Libre' : slot.state === 'en_servicio' ? 'En Servicio' : 'Descanso'}
+                                {slot.state === 'libre' ? 'Disponible' : slot.state === 'en_servicio' ? 'En Cita' : 'Descanso'}
                               </span>
                             </td>
                           ))
                         ) : (
                           timelineHours.map((hr, hIdx) => (
                             <td key={hIdx} className="py-3 px-1 text-center">
-                              <span className="inline-block w-full py-1 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
-                                Libre
+                              <span className="inline-block w-full py-1.5 rounded-lg text-[10px] font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">
+                                Disponible
                               </span>
                             </td>
                           ))
                         )}
 
                         <td className="py-3 px-3 text-right">
-                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
-                            spec.status === 'disponible' ? 'bg-emerald-500/20 text-emerald-400' :
-                            spec.status === 'ocupado' ? 'bg-rose-500/20 text-rose-400' :
-                            'bg-amber-500/20 text-amber-400'
+                          <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase ${
+                            spec.status === 'disponible' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' :
+                            spec.status === 'ocupado' ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40' :
+                            'bg-amber-500/20 text-amber-300 border border-amber-500/40'
                           }`}>
                             {spec.status}
                           </span>
@@ -219,188 +286,182 @@ export const B2BDashboard: React.FC<B2BDashboardProps> = ({
                   </tbody>
                 </table>
               </div>
-            </div>
-
-            {/* Bottom Row: IA Mutation Promo & Stock Alarms (From Image 1) */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              
-              {/* IA Mutation Flyer Banner (Image 1 Right Box) */}
-              <div className="p-5 rounded-2xl bg-gradient-to-br from-slate-900 via-cyan-950/40 to-slate-900 border border-cyan-500/40 shadow-xl space-y-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-lg bg-cyan-500/20 text-cyan-400 flex items-center justify-center font-bold text-xs">
-                    AI
-                  </div>
-                  <div>
-                    <h3 className="text-xs font-bold text-cyan-300 uppercase tracking-wide">Ajustes de Mutación & Flyers con IA</h3>
-                    <p className="text-[11px] text-slate-400">Recomendaciones dinámicas de ocupación</p>
-                  </div>
-                </div>
-
-                <div className="p-4 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2">
-                  <div className="flex items-center gap-2 text-xs text-amber-400 font-bold">
-                    <Sparkles className="w-4 h-4" /> DETECTADA BAJA OCUPACIÓN: Lanzar Promo Martes 11:00 AM
-                  </div>
-                  <p className="text-xs text-slate-300">
-                    El algoritmo de Elevate Node sugiere mutar el banner principal de la App B2C a "Corte + Barba 20% OFF" durante las horas valle.
-                  </p>
-                  <button
-                    onClick={() => setPromoApproved(!promoApproved)}
-                    className={`w-full py-2.5 mt-2 rounded-xl text-xs font-black uppercase tracking-wider transition ${
-                      promoApproved 
-                        ? 'bg-emerald-600 text-white font-bold' 
-                        : 'bg-cyan-600 hover:bg-cyan-500 text-white shadow-lg shadow-cyan-600/20'
-                    }`}
-                  >
-                    {promoApproved ? '✓ PROMO APROBADA & MUTADA EN APP B2C' : 'APROBAR & MUTAR APP B2C'}
-                  </button>
-                </div>
-              </div>
-
-              {/* Alertas Críticas & Inventario (Image 1 Left Box) */}
-              <div className="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-xl space-y-3">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-xs font-bold text-slate-300 uppercase tracking-wide flex items-center gap-1.5">
-                    <AlertTriangle className="w-4 h-4 text-rose-400" /> Inventario & Alertas de Stock
-                  </h3>
-                  <span className="text-[10px] text-rose-400 font-semibold">2 Alertas Activas</span>
-                </div>
-
-                <div className="space-y-2">
-                  {stockAlerts.map((alt) => (
-                    <div 
-                      key={alt.id}
-                      className="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800 flex items-center justify-between text-xs"
-                    >
-                      <div className="flex items-center gap-2">
-                        <span className={`w-2 h-2 rounded-full ${alt.severity === 'critica' ? 'bg-rose-500 animate-pulse' : 'bg-amber-400'}`}></span>
-                        <div>
-                          <div className="font-bold text-white">{alt.item}</div>
-                          <div className="text-[10px] text-slate-400">{alt.description}</div>
-                        </div>
-                      </div>
-                      <span className="text-xs font-mono font-bold text-amber-400">{alt.currentStock} uds</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
 
             </div>
 
+            {/* Monitor Stand Base (Realistic hardware representation from Image 1) */}
+            {showMonitorFrame && (
+              <div className="flex flex-col items-center">
+                <div className="w-20 h-6 bg-slate-700 border-x border-slate-600 shadow-inner"></div>
+                <div className="w-48 h-3 bg-slate-600 rounded-b-xl border border-slate-500 shadow-2xl"></div>
+              </div>
+            )}
           </div>
-        )}
+        </section>
 
-        {/* SECTION: ONBOARDING FLOW (From Image 1: 5 Steps) */}
-        {activeSection === 'onboarding' && (
-          <div className="p-6 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-6">
+        {/* 4. BLOQUES INFERIORES: CONTABILIDAD, INVENTARIO, IA FLYERS, STAFF & KILL SWITCH */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          
+          {/* BLOQUE 1: CONTABILIDAD & STRIPE PAYOUTS [cite: 2] */}
+          <div className="p-5 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl flex flex-col justify-between space-y-4">
             <div>
-              <h2 className="text-base font-black text-white">Flujo de Onboarding del Socio (SaaS B2B)</h2>
-              <p className="text-xs text-slate-400">Proceso guiado de 5 fases para configurar y mutar la app</p>
-            </div>
+              <span className="text-[10px] font-bold text-cyan-400 uppercase tracking-widest">Finanzas B2B [cite: 2]</span>
+              <h3 className="text-xs font-black text-white uppercase tracking-wider mt-0.5">
+                CONTABILIDAD & STRIPE
+              </h3>
 
-            {/* Stepper bar */}
-            <div className="grid grid-cols-1 sm:grid-cols-5 gap-3 text-xs">
-              {[
-                { step: 1, title: '1. Registro de Socio', desc: 'Supabase Auth' },
-                { step: 2, title: '2. Configuración Local', desc: 'Dirección & CLABE' },
-                { step: 3, title: '3. Alta de Personal', desc: 'Barberos & Staff' },
-                { step: 4, title: '4. Servicios', desc: 'Precios & Tiempos' },
-                { step: 5, title: '5. Lanzamiento', desc: 'Confirmar & Mutar' },
-              ].map((s) => (
-                <div 
-                  key={s.step}
-                  onClick={() => setOnboardingStep(s.step)}
-                  className={`p-3 rounded-xl border cursor-pointer transition ${
-                    onboardingStep === s.step
-                      ? 'bg-cyan-950/50 border-cyan-400 text-white shadow-lg shadow-cyan-500/10'
-                      : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:border-slate-700'
-                  }`}
-                >
-                  <div className="font-bold text-xs">{s.title}</div>
-                  <div className="text-[10px] text-slate-500 mt-0.5">{s.desc}</div>
+              <div className="mt-3 space-y-2 text-xs">
+                <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 flex justify-between">
+                  <span className="text-slate-400">Gross Revenue:</span>
+                  <span className="font-bold text-white">$150 MXN</span>
                 </div>
-              ))}
-            </div>
-
-            {/* Step content */}
-            <div className="p-5 rounded-2xl bg-slate-950 border border-slate-800 text-xs space-y-4">
-              {onboardingStep === 1 && (
-                <div className="space-y-2">
-                  <h4 className="font-bold text-white">Paso 1: Registro con Supabase Auth</h4>
-                  <p className="text-slate-400">Autenticación OAuth y JWT conectada a la base de datos de Elevate Node.</p>
-                  <div className="p-3 bg-slate-900 rounded-lg text-emerald-400 font-mono">✓ Sesión activa de socio (ID: socio_7781)</div>
+                <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 flex justify-between">
+                  <span className="text-slate-400">Comisiones:</span>
+                  <span className="font-bold text-amber-400">$10.00</span>
                 </div>
-              )}
-              {onboardingStep === 2 && (
-                <div className="space-y-3">
-                  <h4 className="font-bold text-white">Paso 2: Datos del Local y Cuenta CLABE</h4>
-                  <div className="grid grid-cols-2 gap-3">
-                    <input type="text" readOnly value="Elevate Node: Barbería Urbana" className="bg-slate-900 border border-slate-800 p-2 rounded text-slate-200" />
-                    <input type="text" readOnly value="CLABE: 012180001234567890" className="bg-slate-900 border border-slate-800 p-2 rounded text-slate-200 font-mono" />
-                  </div>
+                <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 flex justify-between">
+                  <span className="text-slate-400">Tips:</span>
+                  <span className="font-bold text-slate-300">$0.00</span>
                 </div>
-              )}
-              {onboardingStep === 3 && (
-                <div className="space-y-2">
-                  <h4 className="font-bold text-white">Paso 3: Staff de Barberos / Estilistas</h4>
-                  <p className="text-slate-400">{specialists.length} especialistas registrados en el sistema.</p>
+                <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 flex justify-between">
+                  <span className="text-slate-400">Transferencias:</span>
+                  <span className="font-bold text-emerald-400">Svetrobed</span>
                 </div>
-              )}
-              {onboardingStep === 4 && (
-                <div className="space-y-2">
-                  <h4 className="font-bold text-white">Paso 4: Definición de Catálogo de Servicios</h4>
-                  <p className="text-slate-400">{services.length} servicios activos con tarifas en MXN.</p>
-                </div>
-              )}
-              {onboardingStep === 5 && (
-                <div className="space-y-3 text-center py-4">
-                  <h4 className="text-base font-black text-white">Paso 5: Lanzamiento & Mutación B2C</h4>
-                  <p className="text-slate-400">Todos los datos están validados y sincronizados con la aplicación de clientes.</p>
-                  <button 
-                    onClick={() => alert('¡Aplicación B2C mutada exitosamente con la nueva identidad!')}
-                    className="px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-black rounded-xl uppercase tracking-wider text-xs shadow-lg shadow-cyan-500/20"
-                  >
-                    CONFIRMAR & MUTAR APP B2C 🚀
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* SECTION: STRIPE PAYOUTS */}
-        {activeSection === 'stripe' && (
-          <div className="p-6 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-5">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <div>
-                <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                  <CreditCard className="w-4 h-4 text-cyan-400" /> Contabilidad & Stripe Payouts
-                </h3>
-                <p className="text-xs text-slate-400">Depósitos directos y comisiones de plataforma</p>
               </div>
-              <button 
-                onClick={() => alert('Conectado a Stripe Connect Express')}
-                className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-xs font-semibold rounded-lg text-white"
+            </div>
+
+            <button 
+              onClick={() => alert('Stripe Payouts en proceso a tu CLABE interbancaria')}
+              className="w-full py-2 bg-slate-800 hover:bg-slate-700 text-xs font-bold rounded-xl transition text-slate-200"
+            >
+              Ver Detalle Contabilidad ➔
+            </button>
+          </div>
+
+          {/* BLOQUE 2: INVENTARIO & ALERTAS DE STOCK [cite: 2] */}
+          <div className="p-5 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl flex flex-col justify-between space-y-4">
+            <div>
+              <span className="text-[10px] font-bold text-rose-400 uppercase tracking-widest">Insumos [cite: 2]</span>
+              <h3 className="text-xs font-black text-white uppercase tracking-wider mt-0.5">
+                INVENTARIO & ALERTAS DE STOCK
+              </h3>
+
+              <div className="mt-3 space-y-2 text-xs">
+                <div className="p-2.5 rounded-xl bg-rose-950/30 border border-rose-500/40 flex items-center justify-between">
+                  <span className="font-bold text-rose-300 flex items-center gap-1.5">
+                    ⚠️ Navajas, pomadas
+                  </span>
+                  <span className="text-rose-400 text-[10px] font-bold">Crítica &gt;</span>
+                </div>
+
+                <div className="p-2.5 rounded-xl bg-amber-950/30 border border-amber-500/40 flex items-center justify-between">
+                  <span className="font-bold text-amber-300 flex items-center gap-1.5">
+                    ◻ Compras sugeridas
+                  </span>
+                  <span className="text-amber-400 text-[10px] font-bold">Soporte &gt;</span>
+                </div>
+
+                <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between">
+                  <span className="text-slate-300">Toallas descartables</span>
+                  <span className="text-slate-400 text-[10px] font-mono">80 uds</span>
+                </div>
+              </div>
+            </div>
+
+            <button 
+              onClick={() => alert('Orden de compra automática generada')}
+              className="w-full py-2 bg-slate-800 hover:bg-slate-700 text-xs font-bold rounded-xl transition text-slate-200"
+            >
+              Gestionar Inventario ➔
+            </button>
+          </div>
+
+          {/* BLOQUE 3: AJUSTES DE MUTACIÓN & FLYERS CON IA [cite: 1, 2] */}
+          <div className="p-5 rounded-3xl bg-gradient-to-br from-slate-900 via-cyan-950/30 to-slate-900 border border-cyan-500/40 shadow-xl flex flex-col justify-between space-y-4">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="w-5 h-5 rounded-md bg-cyan-500/20 text-cyan-400 flex items-center justify-center text-[10px] font-black">AI</span>
+                <span className="text-[10px] font-bold text-cyan-400 uppercase tracking-widest">Motor de Inteligencia [cite: 1, 2]</span>
+              </div>
+              <h3 className="text-xs font-black text-white uppercase tracking-wider">
+                AJUSTES DE MUTACIÓN & FLYERS
+              </h3>
+
+              <div className="mt-3 p-3 rounded-2xl bg-slate-950/90 border border-slate-800 space-y-2 text-xs">
+                <div className="text-amber-400 font-extrabold flex items-center gap-1.5">
+                  <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
+                  DETECTADA BAJA OCUPACIÓN: Lanzar Promo Martes 11:00 AM
+                </div>
+                <p className="text-slate-300 text-[11px] leading-relaxed">
+                  Lanza un flyer dinámico en la App B2C para llenar los puestos vacíos del turno matutino.
+                </p>
+              </div>
+            </div>
+
+            <button 
+              onClick={() => setPromoApproved(!promoApproved)}
+              className={`w-full py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition ${
+                promoApproved 
+                  ? 'bg-emerald-600 text-white font-bold' 
+                  : 'bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 shadow-lg shadow-cyan-500/20'
+              }`}
+            >
+              {promoApproved ? '✓ FLYER APROBADO & MUTADO' : 'APROBAR & MUTAR APP B2C 🚀'}
+            </button>
+          </div>
+
+          {/* BLOQUE 4: GESTIÓN STAFF & RENDIMIENTO + KILL SWITCH [cite: 2] */}
+          <div className="p-5 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl flex flex-col justify-between space-y-4">
+            <div>
+              <span className="text-[10px] font-bold text-amber-400 uppercase tracking-widest">Productividad [cite: 2]</span>
+              <h3 className="text-xs font-black text-white uppercase tracking-wider mt-0.5">
+                GESTIÓN STAFF & RENDIMIENTO
+              </h3>
+
+              <div className="mt-3 grid grid-cols-2 gap-2 text-center">
+                <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800">
+                  <span className="text-[10px] text-slate-400 block">Rate Retención</span>
+                  <span className="text-lg font-black text-cyan-400">58.9%</span>
+                </div>
+                <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800">
+                  <span className="text-[10px] text-slate-400 block">Duración Promedio</span>
+                  <span className="text-lg font-black text-amber-400">50.0h</span>
+                </div>
+              </div>
+
+              {/* Photos row */}
+              <div className="flex justify-center -space-x-2 pt-3">
+                {specialists.slice(0, 4).map((s) => (
+                  <img 
+                    key={s.id} 
+                    src={s.avatarUrl} 
+                    alt={s.name} 
+                    className="w-10 h-10 rounded-full border-2 border-slate-900 object-cover" 
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* SEGURIDAD & KILL SWITCH (Exact matching Image 1) */}
+            <div className="p-3 rounded-2xl bg-gradient-to-r from-slate-950 to-slate-900 border border-rose-500/40 flex items-center justify-between">
+              <div>
+                <span className="text-[9px] font-bold text-rose-400 uppercase tracking-wider block">Seguridad</span>
+                <span className="text-xs font-black text-white">KILL SWITCH BOT</span>
+              </div>
+              <button
+                onClick={() => setKillSwitchActive(!killSwitchActive)}
+                className={`w-10 h-6 rounded-full p-1 transition-colors duration-200 ease-in-out ${
+                  killSwitchActive ? 'bg-rose-600' : 'bg-slate-700'
+                }`}
               >
-                Configurar Stripe Connect
+                <div className={`w-4 h-4 rounded-full bg-white transition-transform duration-200 ease-in-out ${
+                  killSwitchActive ? 'translate-x-4' : 'translate-x-0'
+                }`} />
               </button>
             </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
-              <div className="p-4 rounded-xl bg-slate-950 border border-slate-800">
-                <span className="text-slate-400">Gross Revenue</span>
-                <div className="text-xl font-bold text-white mt-1">$150.00 MXN</div>
-              </div>
-              <div className="p-4 rounded-xl bg-slate-950 border border-slate-800">
-                <span className="text-slate-400">Comisiones Plataforma</span>
-                <div className="text-xl font-bold text-amber-400 mt-1">$10.00 MXN</div>
-              </div>
-              <div className="p-4 rounded-xl bg-slate-950 border border-slate-800">
-                <span className="text-slate-400">Transferencias Bancarias</span>
-                <div className="text-xl font-bold text-emerald-400 mt-1">Svetrobed</div>
-              </div>
-            </div>
           </div>
-        )}
+
+        </div>
 
       </main>
 
