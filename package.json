@@ -1,28 +1,16 @@
 {
-  "name": "proyecto-elevate-node",
+  "name": "elevate-node-monorepo",
   "private": true,
-  "version": "0.0.0",
-  "type": "module",
+  "version": "1.0.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
-    "preview": "vite preview"
-  },
-  "devDependencies": {
-    "@tailwindcss/vite": "^4.3.3",
-    "@types/react": "^19.2.18",
-    "@types/react-dom": "^19.2.5",
-    "@vitejs/plugin-react": "^6.1.1",
-    "tailwindcss": "^4.3.3",
-    "typescript": "~6.0.2",
-    "vite": "^8.2.2"
-  },
-  "dependencies": {
-    "@supabase/supabase-js": "^2.112.4",
-    "clsx": "^2.1.1",
-    "lucide-react": "^1.39.0",
-    "react": "^19.2.8",
-    "react-dom": "^19.2.8",
-    "tailwind-merge": "^3.6.0"
+    "dev:b2c": "npm run dev --workspace=apps/elevate-b2c",
+    "dev:b2b": "npm run dev --workspace=apps/elevate-b2b",
+    "build:b2c": "npm run build --workspace=apps/elevate-b2c",
+    "build:b2b": "npm run build --workspace=apps/elevate-b2b",
+    "build": "npm run build:b2c && npm run build:b2b"
   }
 }

@@ -1,0 +1,71 @@
+@import "tailwindcss";
+
+* { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+
+/* B2C: Fondo claro, paleta blanco/gris/navy/dorado */
+:root {
+  --en-navy:   #0A1628;
+  --en-navy2:  #111D35;
+  --en-cyan:   #00BCD4;
+  --en-gold:   #D4A017;
+  --en-gold2:  #C8870A;
+  --en-gray:   #F0F2F5;
+  --en-gray2:  #E2E6EC;
+  --en-text:   #1A2B45;
+  --en-muted:  #6B7B8F;
+}
+
+body { background: #F0F2F5; color: var(--en-text); }
+
+/* Circuit background decoration (subtle gold lines) */
+.circuit-bg {
+  background-image:
+    radial-gradient(circle, rgba(212,160,23,0.08) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+/* Scrollbar thin */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: #E2E6EC; }
+::-webkit-scrollbar-thumb { background: rgba(10,22,40,0.25); border-radius: 99px; }
+
+/* Gold glow buttons */
+.btn-cta {
+  background: linear-gradient(135deg, var(--en-navy) 0%, var(--en-navy2) 100%);
+  color: var(--en-gold);
+  border: 1.5px solid var(--en-gold);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  transition: all 0.2s;
+  box-shadow: 0 4px 20px rgba(212,160,23,0.2);
+}
+.btn-cta:hover {
+  box-shadow: 0 6px 28px rgba(212,160,23,0.35);
+  border-color: #F0C040;
+  color: #F0C040;
+}
+
+/* Category pill active */
+.cat-active {
+  background: var(--en-navy);
+  color: #fff;
+  border-color: var(--en-navy);
+}
+
+/* Card hover */
+.card-hover {
+  transition: transform 0.18s, box-shadow 0.18s;
+}
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(10,22,40,0.12);
+}
+
+/* Snap scroll */
+.snap-x { scroll-snap-type: x mandatory; }
+.snap-start { scroll-snap-align: start; }
+
+/* Hide scrollbar visually */
+.scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
+.scrollbar-none::-webkit-scrollbar { display: none; }
