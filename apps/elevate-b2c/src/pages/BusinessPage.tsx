@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { ArrowLeft, MapPin, Clock, Star, ChevronLeft, ChevronRight, Check, Calendar } from 'lucide-react'
 import { BUSINESSES } from '../data/businesses'
+import { ElevateLogo } from '../components/ElevateLogo'
 import type { Service, StaffMember } from '../types'
 
 type Step = 'home' | 'step1' | 'step2' | 'step3' | 'step4' | 'step5'
@@ -278,12 +279,14 @@ export const BusinessPage: React.FC<BusinessPageProps> = ({ businessId, onBack, 
     <div className="min-h-screen bg-[#F0F2F5] flex flex-col">
 
       {/* ── Fixed Header ────────────────────────────────── */}
-      <header className="bg-white border-b border-[#E2E6EC] px-5 py-3.5 sticky top-0 z-30 flex items-center gap-3 shadow-sm">
-        <button onClick={onBack} className="p-2 rounded-xl hover:bg-[#F0F2F5] transition">
-          <ArrowLeft className="w-5 h-5 text-[#0A1628]" />
-        </button>
-        <div className="flex items-center gap-2 flex-1 min-w-0">
-          <div className="text-lg font-black text-[#0A1628] truncate">{biz.name}</div>
+      <header className="bg-white border-b border-[#E2E6EC] px-5 py-3 sticky top-0 z-30 flex items-center justify-between shadow-sm">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <button onClick={onBack} className="p-2 rounded-xl hover:bg-[#F0F2F5] transition">
+            <ArrowLeft className="w-5 h-5 text-[#0A1628]" />
+          </button>
+          <ElevateLogo variant="light" size="sm" showTagline={false} />
+          <span className="text-[#C0C9D6] font-light">|</span>
+          <div className="text-base font-black text-[#0A1628] truncate">{biz.name}</div>
           {biz.isOpen && (
             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-200 shrink-0">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />

@@ -1,24 +1,24 @@
 import React from 'react'
 
 interface ElevateLogoProps {
-  variant?: 'light' | 'dark'   // light = sobre fondo blanco, dark = sobre fondo oscuro
-  size?: 'sm' | 'md' | 'lg'
+  variant?: 'light' | 'dark'
+  size?: 'sm' | 'md' | 'lg' | 'xl'
   showTagline?: boolean
   tagline?: string
   className?: string
+  layout?: 'full' | 'inline' | 'mark'
 }
 
-const sizes = {
-  sm: { icon: 28, text: 'text-sm', sub: 'text-[9px]' },
-  md: { icon: 36, text: 'text-base', sub: 'text-[10px]' },
-  lg: { icon: 48, text: 'text-xl',  sub: 'text-xs' },
+const sizeConfig = {
+  sm: { imgH: 'h-8', text: 'text-xs', sub: 'text-[9px]' },
+  md: { imgH: 'h-11', text: 'text-sm', sub: 'text-[10px]' },
+  lg: { imgH: 'h-16', text: 'text-base', sub: 'text-xs' },
+  xl: { imgH: 'h-24', text: 'text-lg', sub: 'text-xs' },
 }
 
 /**
- * Logotipo oficial de Elevate Node.
- * Línea diagonal ascendente con nodos — el nodo cima es dorado.
- * variant="light"  → texto azul marino (sobre fondos blancos/claros)
- * variant="dark"   → texto blanco/cian  (sobre fondos oscuros)
+ * Logotipo Oficial Elevate Node.
+ * Basado en el emblema oficial de dos pistas entrelazadas (azul marino + oro) con nodos y tipografía geométrica.
  */
 export const ElevateLogo: React.FC<ElevateLogoProps> = ({
   variant = 'light',
@@ -26,70 +26,63 @@ export const ElevateLogo: React.FC<ElevateLogoProps> = ({
   showTagline = true,
   tagline = 'PLATAFORMA MULTIMODAL',
   className = '',
+  layout = 'inline',
 }) => {
-  const s = sizes[size]
+  const cfg = sizeConfig[size]
   const isDark = variant === 'dark'
 
-  /* Colores según variante */
-  const lineColor   = isDark ? '#00F0FF' : '#0A1628'
-  const nodeColor   = isDark ? '#00F0FF' : '#0A1628'
-  const topNodeFill = '#E5A93C'           /* dorado siempre */
-  const textColor   = isDark ? '#FFFFFF' : '#0A1628'
-  const subColor    = isDark ? '#00F0FF' : '#D4A017'
-
-  return (
-    <div className={`inline-flex items-center gap-2.5 select-none ${className}`}>
-      {/* SVG del ícono de nodos */}
-      <svg
-        width={s.icon}
-        height={s.icon}
-        viewBox="0 0 60 60"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        className="shrink-0"
-      >
-        {/* Línea ascendente doble */}
-        <path
-          d="M 10 48 C 22 44 34 32 46 14"
-          stroke={lineColor}
-          strokeWidth="5"
-          strokeLinecap="round"
-          opacity="0.9"
-        />
-        <path
-          d="M 14 52 C 26 48 38 36 50 18"
-          stroke="#E5A93C"
-          strokeWidth="3"
-          strokeLinecap="round"
-          opacity="0.6"
-        />
-        {/* Nodo base */}
-        <circle cx="10" cy="48" r="5.5" fill="#fff" stroke={nodeColor} strokeWidth="3.5"/>
-        {/* Nodo medio */}
-        <circle cx="28" cy="31" r="4.5" fill="#fff" stroke={nodeColor} strokeWidth="3"/>
-        {/* Nodo cima — dorado */}
-        <circle cx="46" cy="14" r="6"   fill={topNodeFill} stroke="#fff" strokeWidth="2.5"
-          style={{ filter: isDark ? 'drop-shadow(0 0 6px rgba(229,169,60,0.7))' : 'none' }}
-        />
-      </svg>
-
-      {/* Texto */}
-      <div>
-        <div
-          className={`font-black tracking-tight leading-none uppercase ${s.text}`}
-          style={{ color: textColor }}
-        >
-          ELEVATE NODE
+  // Si se pide solo el layout completo como imagen de la marca
+  if (layout === 'full') {
+    return (
+      <div className={`inline-flex flex-col items-center select-none ${className}`}>
+        <div className={`overflow-hidden rounded-xl ${isDark ? 'bg-white/95 p-2 shadow-lg shadow-black/30 border border-[#D4A017]/40' : ''}`}>
+          <img
+            src="/elevate-node-logo.png"
+            alt="Elevate Node"
+            className={`${cfg.imgH} w-auto object-contain`}
+          />
         </div>
-        {showTagline && (
+        {showTagline && tagline && (
+          <span
+            className={`font-black tracking-[0.2em] uppercase mt-1.5 ${cfg.sub} ${
+              isDark ? 'text-[#D4A017]' : 'text-[#0A1628]'
+            }`}
+          >
+            {tagline}
+          </span>
+        )}
+      </div>
+    )
+  }
+
+  // Layout inline estándar para headers y navbars
+  return (
+    <div className={`inline-flex items-center gap-3 select-none ${className}`}>
+      {/* Contenedor del logotipo oficial */}
+      <div className={`flex items-center justify-center shrink-0 rounded-xl overflow-hidden transition ${
+        isDark 
+          ? 'bg-white p-1.5 shadow-md shadow-black/40 border border-[#D4A017]/50' 
+          : 'bg-white/90 p-1'
+      }`}>
+        <img
+          src="/elevate-node-logo.png"
+          alt="Elevate Node"
+          className={`${cfg.imgH} w-auto object-contain max-w-[140px]`}
+        />
+      </div>
+
+      {/* Tagline o subtítulo opcional */}
+      {showTagline && tagline && (
+        <div className="border-l border-[#C0C9D6] pl-3 py-0.5">
           <div
-            className={`font-bold tracking-[0.18em] uppercase leading-tight ${s.sub}`}
-            style={{ color: subColor }}
+            className={`font-black tracking-[0.16em] uppercase leading-tight ${cfg.sub} ${
+              isDark ? 'text-[#D4A017]' : 'text-[#0A1628]'
+            }`}
           >
             {tagline}
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   )
 }
