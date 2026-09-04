@@ -6,19 +6,19 @@ interface ElevateLogoProps {
   showTagline?: boolean
   tagline?: string
   className?: string
-  layout?: 'full' | 'inline' | 'mark'
+  layout?: 'horizontal' | 'stacked' | 'emblem-only'
 }
 
-const sizeConfig = {
-  sm: { imgH: 'h-8', text: 'text-xs', sub: 'text-[9px]' },
-  md: { imgH: 'h-11', text: 'text-sm', sub: 'text-[10px]' },
-  lg: { imgH: 'h-16', text: 'text-base', sub: 'text-xs' },
-  xl: { imgH: 'h-24', text: 'text-lg', sub: 'text-xs' },
+const sizes = {
+  sm: { iconH: 'h-6',  text: 'text-sm',   sub: 'text-[9px]' },
+  md: { iconH: 'h-8',  text: 'text-base', sub: 'text-[10px]' },
+  lg: { iconH: 'h-11', text: 'text-xl',   sub: 'text-xs' },
+  xl: { iconH: 'h-14', text: 'text-2xl',  sub: 'text-sm' },
 }
 
 /**
- * Logotipo Oficial Elevate Node.
- * Basado en el emblema oficial de dos pistas entrelazadas (azul marino + oro) con nodos y tipografía geométrica.
+ * Logotipo Oficial de Elevate Node.
+ * Emblema extraído con transparencia pura (sin fondos ni texturas) y tipografía geométrica exacta.
  */
 export const ElevateLogo: React.FC<ElevateLogoProps> = ({
   variant = 'light',
@@ -26,28 +26,33 @@ export const ElevateLogo: React.FC<ElevateLogoProps> = ({
   showTagline = true,
   tagline = 'PLATAFORMA MULTIMODAL',
   className = '',
-  layout = 'inline',
+  layout = 'horizontal',
 }) => {
-  const cfg = sizeConfig[size]
+  const s = sizes[size]
   const isDark = variant === 'dark'
 
-  // Si se pide solo el layout completo como imagen de la marca
-  if (layout === 'full') {
+  // Si se solicita únicamente el emblema
+  if (layout === 'emblem-only') {
+    return (
+      <img
+        src="/elevate-node-emblem.png"
+        alt="Elevate Node Icon"
+        className={`${s.iconH} w-auto object-contain shrink-0 ${className}`}
+      />
+    )
+  }
+
+  // Si se solicita layout apilado vertical
+  if (layout === 'stacked') {
     return (
       <div className={`inline-flex flex-col items-center select-none ${className}`}>
-        <div className={`overflow-hidden rounded-xl ${isDark ? 'bg-white/95 p-2 shadow-lg shadow-black/30 border border-[#D4A017]/40' : ''}`}>
-          <img
-            src="/elevate-node-logo.png"
-            alt="Elevate Node"
-            className={`${cfg.imgH} w-auto object-contain`}
-          />
-        </div>
+        <img
+          src={isDark ? '/elevate-node-logo-white.png' : '/elevate-node-logo.png'}
+          alt="Elevate Node"
+          className={`${s.iconH} w-auto object-contain shrink-0`}
+        />
         {showTagline && tagline && (
-          <span
-            className={`font-black tracking-[0.2em] uppercase mt-1.5 ${cfg.sub} ${
-              isDark ? 'text-[#D4A017]' : 'text-[#0A1628]'
-            }`}
-          >
+          <span className={`font-bold tracking-[0.18em] uppercase mt-1 ${s.sub} text-[#D4A017]`}>
             {tagline}
           </span>
         )}
@@ -55,34 +60,31 @@ export const ElevateLogo: React.FC<ElevateLogoProps> = ({
     )
   }
 
-  // Layout inline estándar para headers y navbars
+  // Layout horizontal estándar: Emblema extraído a la izquierda + Texto alineado a la derecha
   return (
-    <div className={`inline-flex items-center gap-3 select-none ${className}`}>
-      {/* Contenedor del logotipo oficial */}
-      <div className={`flex items-center justify-center shrink-0 rounded-xl overflow-hidden transition ${
-        isDark 
-          ? 'bg-white p-1.5 shadow-md shadow-black/40 border border-[#D4A017]/50' 
-          : 'bg-white/90 p-1'
-      }`}>
-        <img
-          src="/elevate-node-logo.png"
-          alt="Elevate Node"
-          className={`${cfg.imgH} w-auto object-contain max-w-[140px]`}
-        />
-      </div>
-
-      {/* Tagline o subtítulo opcional */}
-      {showTagline && tagline && (
-        <div className="border-l border-[#C0C9D6] pl-3 py-0.5">
-          <div
-            className={`font-black tracking-[0.16em] uppercase leading-tight ${cfg.sub} ${
-              isDark ? 'text-[#D4A017]' : 'text-[#0A1628]'
-            }`}
+    <div className={`inline-flex items-center gap-2.5 select-none ${className}`}>
+      <img
+        src="/elevate-node-emblem.png"
+        alt="Elevate Node Emblem"
+        className={`${s.iconH} w-auto object-contain shrink-0 drop-shadow-sm`}
+      />
+      <div className="flex flex-col justify-center">
+        <span
+          className={`font-black tracking-tight leading-none uppercase ${s.text} ${
+            isDark ? 'text-white' : 'text-[#0A1628]'
+          }`}
+          style={{ letterSpacing: '0.04em' }}
+        >
+          ELEVATE NODE
+        </span>
+        {showTagline && tagline && (
+          <span
+            className={`font-bold tracking-[0.18em] uppercase leading-tight mt-0.5 ${s.sub} text-[#D4A017]`}
           >
             {tagline}
-          </div>
-        </div>
-      )}
+          </span>
+        )}
+      </div>
     </div>
   )
 }
