@@ -36,10 +36,11 @@ const stateLabel = {
 interface CockpitProps {
   partnerName: string
   onLogout: () => void
+  initialSection?: Section
 }
 
-export const CockpitPage: React.FC<CockpitProps> = ({ partnerName, onLogout }) => {
-  const [section, setSection] = useState<Section>('cockpit')
+export const CockpitPage: React.FC<CockpitProps> = ({ partnerName, onLogout, initialSection = 'cockpit' }) => {
+  const [section, setSection] = useState<Section>(initialSection)
   const [aiApproved, setAiApproved] = useState(false)
   const [showPreviewModal, setShowPreviewModal] = useState(false)
 

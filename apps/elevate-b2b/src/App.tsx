@@ -28,10 +28,13 @@ export default function App() {
     return <div className="min-h-screen bg-[#070E1A] flex items-center justify-center text-[#00F0FF]">Cargando...</div>
   }
 
+  const [initialSection, setInitialSection] = useState<'cockpit' | 'servicios' | 'staff' | 'contabilidad' | 'inventario' | 'ajustes'>('cockpit')
+
   if (!session && !demoUser) {
     return (
       <LoginPage
-        onLogin={(partner) => {
+        onLogin={(partner, targetSection) => {
+          if (targetSection) setInitialSection(targetSection)
           setDemoUser(partner.name || partner.email)
         }}
       />
@@ -41,8 +44,10 @@ export default function App() {
   return (
     <CockpitPage
       partnerName={session?.user?.email?.split('@')[0] || demoUser || 'Socio'}
+      initialSection={initialSection}
       onLogout={async () => {
         setDemoUser(null)
+        setInitialSection('cockpit')
         await supabase.auth.signOut()
       }}
     />

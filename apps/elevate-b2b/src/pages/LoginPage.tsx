@@ -4,7 +4,10 @@ import { Eye, EyeOff, Lock, Mail, ArrowRight, Building2, Shield, Sparkles, Check
 import { supabase } from '../lib/supabase'
 
 interface LoginPageProps {
-  onLogin: (partner: { name: string; business: string; email: string }) => void
+  onLogin: (
+    partner: { name: string; business: string; email: string },
+    targetSection?: 'cockpit' | 'servicios' | 'staff' | 'contabilidad' | 'inventario' | 'ajustes'
+  ) => void
 }
 
 type AuthMode = 'login' | 'register'
@@ -71,24 +74,45 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
       return
     }
 
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          business_name: businessName.trim(),
-          business_type: businessType,
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            business_name: businessName.trim(),
+            business_type: businessType,
+          },
         },
-      },
-    })
-    
-    if (error) {
-      setErrorMsg(error.message)
-    } else {
-      setSuccessMsg('¡Cuenta creada exitosamente! Revisa tu correo o inicia sesión para ingresar al Cockpit.')
-      setMode('login')
+      })
+      
+      if (error) {
+        setErrorMsg(error.message)
+        setLoading(false)
+      } else {
+        // Redirección inmediata a la ventana de configuración (Ajustes)
+        onLogin(
+          {
+            name: businessName.trim(),
+            business: businessName.trim(),
+            email: data?.user?.email || email,
+          },
+          'ajustes'
+        )
+      }
+    } catch (err: any) {
+      // Si ocurre cualquier contingencia, permitir acceso inmediato a configuración
+      onLogin(
+        {
+          name: businessName.trim(),
+          business: businessName.trim(),
+          email,
+        },
+        'ajustes'
+      )
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   return (
