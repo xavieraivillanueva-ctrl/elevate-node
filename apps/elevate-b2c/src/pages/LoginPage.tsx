@@ -1,26 +1,31 @@
 import React, { useState } from 'react'
 import { ElevateLogo } from '../components/ElevateLogo'
 import { Eye, EyeOff, Lock, Mail, Sparkles, ArrowRight, User } from 'lucide-react'
+import { supabase } from '../lib/supabase'
 
-interface LoginPageProps {
-  onLogin: (user: { name: string; email: string }) => void
-}
-
-export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
+export const LoginPage: React.FC = () => {
   const [isRegister, setIsRegister] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [name, setName] = useState('')
   const [showPwd, setShowPwd] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [errorMsg, setErrorMsg] = useState('')
 
-  const handle = (e: React.FormEvent) => {
+  const handle = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
-    setTimeout(() => {
-      setLoading(false)
-      onLogin({ name: name || email.split('@')[0], email })
-    }, 800)
+    setErrorMsg('')
+    
+    if (isRegister) {
+      const { error } = await supabase.auth.signUp({ email, password })
+      if (error) setErrorMsg(error.message)
+      else setErrorMsg('Revisa tu correo para verificar tu cuenta (o simplemente inicia sesión si el autoconfirm está activado).')
+    } else {
+      const { error } = await supabase.auth.signInWithPassword({ email, password })
+      if (error) setErrorMsg(error.message)
+    }
+    setLoading(false)
   }
 
   return (
@@ -119,10 +124,16 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                 </div>
               )}
 
+              {errorMsg && (
+                <div className="text-xs text-red-500 bg-red-50 border border-red-200 rounded-xl p-3 text-center">
+                  {errorMsg}
+                </div>
+              )}
+
               {/* Submit */}
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || !email || !password}
                 className="btn-cta w-full py-3.5 rounded-xl text-sm flex items-center justify-center gap-2 disabled:opacity-60 mt-2"
               >
                 {loading ? (
@@ -145,7 +156,15 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
 
             {/* Google */}
             <button
-              onClick={() => onLogin({ name: 'Usuario Google', email: 'user@gmail.com' })}
+              type="button"
+              onClick={async () => {
+                await supabase.auth.signInWithOAuth({
+                  provider: 'google',
+                  options: {
+                    redirectTo: window.location.origin,
+                  }
+                })
+              }}
               className="w-full py-3 rounded-xl border border-[#E2E6EC] bg-white hover:bg-[#F8F9FB] text-sm font-semibold text-[#0A1628] flex items-center justify-center gap-2.5 transition"
             >
               <svg className="w-4 h-4" viewBox="0 0 24 24">

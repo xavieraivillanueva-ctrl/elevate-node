@@ -1,8 +1,15 @@
 import React, { useState } from 'react'
-import { ArrowLeft, MapPin, Clock, Star, ChevronLeft, ChevronRight, Check, Calendar } from 'lucide-react'
+import { ArrowLeft, MapPin, Clock, Star, ChevronLeft, ChevronRight, Check, Calendar, Loader2 } from 'lucide-react'
 import { BUSINESSES } from '../data/businesses'
 import { ElevateLogo } from '../components/ElevateLogo'
 import type { Service, StaffMember } from '../types'
+import { useBooking } from '../hooks/useBooking'
+import { useLiveBusiness } from '../hooks/useLiveBusiness'
+import { loadStripe } from '@stripe/stripe-js'
+import { Elements } from '@stripe/react-stripe-js'
+import { StripePaymentForm } from '../components/StripePaymentForm'
+
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '')
 
 type Step = 'home' | 'step1' | 'step2' | 'step3' | 'step4' | 'step5'
 
@@ -27,11 +34,15 @@ interface BusinessPageProps {
   onBack: () => void
   tab: 'inicio' | 'citas' | 'perfil' | 'ajustes'
   onTabChange: (t: 'inicio' | 'citas' | 'perfil' | 'ajustes') => void
+  userId?: string
   userName: string
 }
 
-export const BusinessPage: React.FC<BusinessPageProps> = ({ businessId, onBack, tab, onTabChange, userName }) => {
-  const biz = BUSINESSES.find(b => b.id === businessId)!
+export const BusinessPage: React.FC<BusinessPageProps> = ({ businessId, onBack, tab, onTabChange, userId, userName }) => {
+  const fallbackBiz = BUSINESSES.find(b => b.id === businessId) || BUSINESSES[0]
+  const { business: liveBiz } = useLiveBusiness(fallbackBiz.slug)
+  const biz = liveBiz || fallbackBiz
+
   const [step, setStep] = useState<Step>('home')
   const [selectedService, setSelectedService] = useState<Service | null>(null)
   const [selectedStaff, setSelectedStaff] = useState<StaffMember | null>(null)
@@ -39,7 +50,23 @@ export const BusinessPage: React.FC<BusinessPageProps> = ({ businessId, onBack, 
   const [selectedTime, setSelectedTime] = useState<string | null>(null)
   const [bannerIdx, setBannerIdx] = useState(0)
 
-  const resetBooking = () => { setStep('home'); setSelectedService(null); setSelectedStaff(null); setSelectedDay(11); setSelectedTime(null) }
+  // Client contact info (captured on Step 4)
+  const [clientName, setClientName]   = useState(userName || '')
+  const [clientPhone, setClientPhone] = useState('')
+  const [clientEmail, setClientEmail] = useState('')
+
+  const { state: bookingState, error: bookingError, insertAppointment, reset: resetBooking2 } = useBooking()
+
+  const resetBooking = () => {
+    setStep('home')
+    setSelectedService(null)
+    setSelectedStaff(null)
+    setSelectedDay(11)
+    setSelectedTime(null)
+    setClientPhone('')
+    setClientEmail('')
+    resetBooking2()
+  }
 
   /* ── BOOKING MODAL overlay ───────────────────────────────── */
   if (step !== 'home') {
@@ -211,33 +238,82 @@ export const BusinessPage: React.FC<BusinessPageProps> = ({ businessId, onBack, 
                 <div className="flex justify-between text-base"><span className="font-black text-[#0A1628]">Total</span><span className="font-black" style={{ color: '#D4A017' }}>${selectedService?.price.toLocaleString()} MXN</span></div>
               </div>
 
-              {/* Card input mock */}
+              {/* Datos de contacto del cliente */}
               <div className="bg-white rounded-2xl border border-[#E2E6EC] p-4 space-y-3">
-                <p className="text-xs font-black text-[#6B7B8F] uppercase tracking-wider">Información de Tarjeta</p>
-                <div className="bg-[#F0F2F5] border border-[#E2E6EC] rounded-xl px-4 py-3 flex items-center gap-2">
-                  <span className="text-[#6B7B8F] text-sm">💳</span>
-                  <span className="text-sm text-[#A0ADB8] flex-1">Número de tarjeta</span>
-                  <span className="text-xs text-[#A0ADB8]">Stripe</span>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="bg-[#F0F2F5] border border-[#E2E6EC] rounded-xl px-4 py-3 text-sm text-[#A0ADB8]">MM / AA</div>
-                  <div className="bg-[#F0F2F5] border border-[#E2E6EC] rounded-xl px-4 py-3 text-sm text-[#A0ADB8]">CVC</div>
-                </div>
+                <p className="text-xs font-black text-[#6B7B8F] uppercase tracking-wider">Tus Datos de Contacto</p>
+                <input
+                  type="text"
+                  placeholder="Nombre completo"
+                  value={clientName}
+                  onChange={e => setClientName(e.target.value)}
+                  className="w-full bg-[#F0F2F5] border border-[#E2E6EC] rounded-xl px-4 py-3 text-sm text-[#0A1628] placeholder:text-[#A0ADB8] outline-none focus:border-[#0A1628]"
+                />
+                <input
+                  type="tel"
+                  placeholder="Teléfono (10 dígitos)"
+                  value={clientPhone}
+                  onChange={e => setClientPhone(e.target.value)}
+                  className="w-full bg-[#F0F2F5] border border-[#E2E6EC] rounded-xl px-4 py-3 text-sm text-[#0A1628] placeholder:text-[#A0ADB8] outline-none focus:border-[#0A1628]"
+                />
+                <input
+                  type="email"
+                  placeholder="Email (opcional)"
+                  value={clientEmail}
+                  onChange={e => setClientEmail(e.target.value)}
+                  className="w-full bg-[#F0F2F5] border border-[#E2E6EC] rounded-xl px-4 py-3 text-sm text-[#0A1628] placeholder:text-[#A0ADB8] outline-none focus:border-[#0A1628]"
+                />
               </div>
 
-              {/* Pago alternativo */}
-              <div className="flex gap-3">
-                <button className="flex-1 py-3 bg-black text-white rounded-xl text-sm font-bold flex items-center justify-center gap-1.5">
-                  🍎 <span>Apple Pay</span>
-                </button>
-                <button className="flex-1 py-3 bg-[#1A73E8] text-white rounded-xl text-sm font-bold flex items-center justify-center gap-1.5">
-                  <span>G</span> <span>Google Pay</span>
-                </button>
-              </div>
+              {/* Error de reserva o pago */}
+              {bookingError && (
+                <div className="w-full p-3 rounded-xl bg-red-50 border border-red-200 text-xs text-red-600 font-bold text-center">
+                  ⚠️ {bookingError}
+                </div>
+              )}
 
-              <button onClick={() => setStep('step5')} className="btn-cta w-full py-3.5 rounded-xl text-sm flex items-center justify-center gap-2">
-                🔒 Pagar ${selectedService?.price.toLocaleString()} MXN →
-              </button>
+              {/* Formulario Seguro de Stripe Elements */}
+              {selectedService && (
+                <Elements stripe={stripePromise}>
+                  <StripePaymentForm
+                    amount={selectedService.price}
+                    clientName={clientName}
+                    clientEmail={clientEmail}
+                    appointmentDetails={{
+                      businessId: biz.id,
+                      serviceId: selectedService.id,
+                      specialistId: selectedStaff?.id,
+                      clientId: userId,
+                      clientName,
+                      clientPhone,
+                      clientEmail,
+                      appointmentDate: `2026-03-${String(selectedDay).padStart(2, '0')}`,
+                      timeSlot: selectedTime,
+                    }}
+                    isSubmitting={bookingState === 'loading'}
+                    onError={(err) => {
+                      alert(`Error en el pago: ${err}`)
+                    }}
+                    onSuccess={async (paymentIntentId) => {
+                      if (!selectedStaff || !selectedTime) return
+                      const dateStr = `2026-03-${String(selectedDay).padStart(2, '0')}`
+                      const ok = await insertAppointment({
+                        businessId: biz.id,
+                        businessSlug: biz.slug,
+                        serviceId: selectedService.id,
+                        specialistId: selectedStaff.id,
+                        clientId: userId,
+                        clientName,
+                        clientPhone,
+                        clientEmail,
+                        appointmentDate: dateStr,
+                        timeSlot: selectedTime,
+                        totalPrice: selectedService.price,
+                      })
+                      if (ok) setStep('step5')
+                    }}
+                  />
+                </Elements>
+              )}
             </div>
           )}
 

@@ -1,14 +1,18 @@
 # Dependencias locales
 node_modules/
 dist/
+**/dist/
 
 # Variables de entorno
 .env
 .env.local
 .env.production
 
-# Vercel
+# Vercel & Temp
 .vercel
+**/.vercel
+.temp/
+**/.temp
 
 # OS
 .DS_Store

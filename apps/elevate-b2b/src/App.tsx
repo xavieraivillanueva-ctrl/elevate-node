@@ -1,17 +1,50 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import './index.css'
 import { LoginPage } from './pages/LoginPage'
 import { CockpitPage } from './pages/CockpitPage'
-
-interface Partner {
-  name: string
-  business: string
-  email: string
-}
+import { supabase } from './lib/supabase'
 
 export default function App() {
-  const [partner, setPartner] = useState<Partner | null>(null)
+  const [session, setSession] = useState<any>(null)
+  const [demoUser, setDemoUser] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
 
-  if (!partner) return <LoginPage onLogin={setPartner} />
-  return <CockpitPage partnerName={partner.name} onLogout={() => setPartner(null)} />
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session)
+      setLoading(false)
+    })
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [])
+
+  if (loading) {
+    return <div className="min-h-screen bg-[#070E1A] flex items-center justify-center text-[#00F0FF]">Cargando...</div>
+  }
+
+  if (!session && !demoUser) {
+    return (
+      <LoginPage
+        onLogin={(partner) => {
+          setDemoUser(partner.name || partner.email)
+        }}
+      />
+    )
+  }
+  
+  return (
+    <CockpitPage
+      partnerName={session?.user?.email?.split('@')[0] || demoUser || 'Socio'}
+      onLogout={async () => {
+        setDemoUser(null)
+        await supabase.auth.signOut()
+      }}
+    />
+  )
 }
