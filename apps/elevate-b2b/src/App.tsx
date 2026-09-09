@@ -7,6 +7,7 @@ import { supabase } from './lib/supabase'
 export default function App() {
   const [session, setSession] = useState<any>(null)
   const [demoUser, setDemoUser] = useState<string | null>(null)
+  const [partnerData, setPartnerData] = useState<{ name: string; business: string; email: string; type?: string } | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -35,6 +36,7 @@ export default function App() {
       <LoginPage
         onLogin={(partner, targetSection) => {
           if (targetSection) setInitialSection(targetSection)
+          setPartnerData(partner)
           setDemoUser(partner.name || partner.email)
         }}
       />
@@ -43,10 +45,13 @@ export default function App() {
   
   return (
     <CockpitPage
-      partnerName={session?.user?.email?.split('@')[0] || demoUser || 'Socio'}
+      partnerName={partnerData?.name || session?.user?.user_metadata?.business_name || session?.user?.email?.split('@')[0] || demoUser || 'Socio'}
+      partnerBusiness={partnerData?.business || session?.user?.user_metadata?.business_name}
+      partnerType={partnerData?.type || session?.user?.user_metadata?.business_type || session?.user?.user_metadata?.category_key}
       initialSection={initialSection}
       onLogout={async () => {
         setDemoUser(null)
+        setPartnerData(null)
         setInitialSection('cockpit')
         await supabase.auth.signOut()
       }}

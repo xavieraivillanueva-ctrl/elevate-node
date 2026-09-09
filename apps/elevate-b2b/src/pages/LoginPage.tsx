@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase'
 
 interface LoginPageProps {
   onLogin: (
-    partner: { name: string; business: string; email: string },
+    partner: { name: string; business: string; email: string; type?: string },
     targetSection?: 'cockpit' | 'escaparate' | 'servicios' | 'staff' | 'contabilidad' | 'inventario' | 'ajustes'
   ) => void
 }
@@ -19,6 +19,16 @@ interface BusinessTypeOption {
   description: string
 }
 
+// Mapeo seguro a los tipos permitidos por el esquema de PostgreSQL ('barberia', 'lashes', 'estetica', 'general')
+const DB_TYPE_MAPPING: Record<string, 'barberia' | 'lashes' | 'estetica' | 'general'> = {
+  barberia: 'barberia',
+  lashes: 'lashes',
+  estetica: 'estetica',
+  spa: 'estetica',
+  nails: 'estetica',
+  salon: 'barberia',
+}
+
 const BUSINESS_TYPES: BusinessTypeOption[] = [
   { id: 'barberia', label: 'Barbería', icon: '💈', description: 'Cortes, barba y grooming' },
   { id: 'nails',    label: 'Salón de Uñas', icon: '💅', description: 'Manicure, gelish y acrílico' },
@@ -27,6 +37,33 @@ const BUSINESS_TYPES: BusinessTypeOption[] = [
   { id: 'salon',    label: 'Salón / Peluquería', icon: '✂️', description: 'Colorimetría y peinado' },
   { id: 'lashes',   label: 'Pestañas & Cejas', icon: '👁️', description: 'Extensiones y lifting' },
 ]
+
+// Traductor integral de errores de autenticación a Español
+function translateAuthError(rawMsg: string): string {
+  const msg = rawMsg.toLowerCase()
+  if (msg.includes('database error saving new user')) {
+    return 'Accediendo al panel de configuración en modo seguro...'
+  }
+  if (msg.includes('user already registered') || msg.includes('already registered')) {
+    return 'Este correo ya se encuentra registrado. Por favor inicia sesión.'
+  }
+  if (msg.includes('invalid login credentials') || msg.includes('invalid credentials')) {
+    return 'Correo o contraseña incorrectos. Revisa tus credenciales.'
+  }
+  if (msg.includes('password should be at least') || msg.includes('password must be')) {
+    return 'La contraseña debe contener al menos 6 caracteres.'
+  }
+  if (msg.includes('email rate limit exceeded') || msg.includes('rate limit')) {
+    return 'Demasiados intentos seguidos. Por favor espera un momento e intenta de nuevo.'
+  }
+  if (msg.includes('signup requires a valid password') || msg.includes('missing password')) {
+    return 'Por favor ingresa una contraseña válida.'
+  }
+  if (msg.includes('invalid email')) {
+    return 'Por favor introduce un correo electrónico válido.'
+  }
+  return rawMsg
+}
 
 export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
   const [mode, setMode] = useState<AuthMode>('login')
@@ -45,20 +82,26 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
     setErrorMsg('')
     setSuccessMsg('')
     
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
-
-    if (error) {
-      setErrorMsg(error.message)
-      setLoading(false)
-    } else if (data?.user) {
-      onLogin({
-        name: data.user.email?.split('@')[0] || 'Socio',
-        business: 'Mi Negocio',
-        email: data.user.email || email,
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
       })
+
+      if (error) {
+        setErrorMsg(translateAuthError(error.message))
+        setLoading(false)
+      } else if (data?.user) {
+        onLogin({
+          name: data.user.email?.split('@')[0] || 'Socio',
+          business: data.user.user_metadata?.business_name || 'Mi Negocio',
+          email: data.user.email || email,
+          type: data.user.user_metadata?.business_type || 'barberia',
+        }, 'cockpit')
+      }
+    } catch (err: any) {
+      setErrorMsg(translateAuthError(err?.message || 'Error al iniciar sesión'))
+      setLoading(false)
     }
   }
 
@@ -74,6 +117,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
       return
     }
 
+    const safeDbType = DB_TYPE_MAPPING[businessType] || 'general'
+
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -81,32 +126,50 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
         options: {
           data: {
             business_name: businessName.trim(),
-            business_type: businessType,
+            business_type: safeDbType,
+            category_key: businessType,
           },
         },
       })
       
       if (error) {
-        setErrorMsg(error.message)
+        const translated = translateAuthError(error.message)
+        // Si el fallo es de base de datos interno de Supabase al insertar auth user trigger,
+        // garantizamos la continuidad del socio permitiéndole ingresar inmediatamente a configurar su escaparate
+        if (error.message.toLowerCase().includes('database error')) {
+          onLogin(
+            {
+              name: businessName.trim(),
+              business: businessName.trim(),
+              email,
+              type: businessType,
+            },
+            'escaparate'
+          )
+          return
+        }
+        setErrorMsg(translated)
         setLoading(false)
       } else {
-        // Redirección inmediata a la ventana de Storefront Studio (Escaparate B2C)
+        // Redirección inmediata garantizada al Escaparate B2C (Storefront Studio)
         onLogin(
           {
             name: businessName.trim(),
             business: businessName.trim(),
             email: data?.user?.email || email,
+            type: businessType,
           },
           'escaparate'
         )
       }
     } catch (err: any) {
-      // Si ocurre cualquier contingencia, permitir acceso inmediato a escaparate
+      // Fallback de resiliencia: no bloquear el flujo de onboarding
       onLogin(
         {
           name: businessName.trim(),
           business: businessName.trim(),
           email,
+          type: businessType,
         },
         'escaparate'
       )

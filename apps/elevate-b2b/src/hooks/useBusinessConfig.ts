@@ -29,8 +29,27 @@ export interface BusinessConfig {
   promoBanners?: PromoBanner[]
 }
 
-export function useBusinessConfig(businessId?: string) {
-  const [business, setBusiness] = useState<BusinessConfig | null>(null)
+export function useBusinessConfig(businessId?: string, initialFallback?: Partial<BusinessConfig>) {
+  const [business, setBusiness] = useState<BusinessConfig | null>(() => {
+    if (initialFallback?.name) {
+      return {
+        id: initialFallback.id || 'temp-local-tenant',
+        name: initialFallback.name,
+        slug: initialFallback.slug || initialFallback.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+        type: initialFallback.type || 'barberia',
+        subtitle: initialFallback.subtitle || 'Personaliza el subtítulo y servicios de tu negocio',
+        address: initialFallback.address || 'Ingresa tu dirección en Ajustes',
+        schedule: initialFallback.schedule || 'Lun a Sáb: 10:00 – 20:00',
+        isOpen: false,
+        clabePayout: initialFallback.clabePayout,
+        primaryColor: initialFallback.primaryColor,
+        accentColor: initialFallback.accentColor,
+        ctaText: initialFallback.ctaText,
+        promoBanners: initialFallback.promoBanners || [],
+      }
+    }
+    return null
+  })
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -78,6 +97,23 @@ export function useBusinessConfig(businessId?: string) {
           ctaText: data.theme_config?.cta_text || undefined,
           promoBanners: data.theme_config?.banners || [],
         })
+      } else if (initialFallback?.name) {
+        // Mantener fallback proporcionado si no se encuentra registro remoto aún
+        setBusiness(prev => prev || ({
+          id: initialFallback.id || 'temp-local-tenant',
+          name: initialFallback.name || 'Mi Negocio',
+          slug: initialFallback.slug || 'mi-negocio',
+          type: initialFallback.type || 'barberia',
+          subtitle: initialFallback.subtitle || 'Personaliza el subtítulo y servicios de tu negocio',
+          address: initialFallback.address || 'Ingresa tu dirección en Ajustes',
+          schedule: initialFallback.schedule || 'Lun a Sáb: 10:00 – 20:00',
+          isOpen: false,
+          clabePayout: initialFallback.clabePayout,
+          primaryColor: initialFallback.primaryColor,
+          accentColor: initialFallback.accentColor,
+          ctaText: initialFallback.ctaText,
+          promoBanners: initialFallback.promoBanners || [],
+        }))
       }
     } catch (err: any) {
       setError(err.message)

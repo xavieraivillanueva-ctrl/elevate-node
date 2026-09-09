@@ -37,16 +37,24 @@ const stateLabel = {
 
 interface CockpitProps {
   partnerName: string
+  partnerBusiness?: string
+  partnerType?: string
   onLogout: () => void
   initialSection?: Section
 }
 
-export const CockpitPage: React.FC<CockpitProps> = ({ partnerName, onLogout, initialSection = 'cockpit' }) => {
+export const CockpitPage: React.FC<CockpitProps> = ({
+  partnerName,
+  partnerBusiness,
+  partnerType,
+  onLogout,
+  initialSection = 'cockpit',
+}) => {
   const [section, setSection] = useState<Section>(initialSection)
   const [aiApproved, setAiApproved] = useState(false)
   const [showPreviewModal, setShowPreviewModal] = useState(false)
 
-  // 1. Motor Multi-tenant y Configuración del Negocio
+  // 1. Motor Multi-tenant y Configuración del Negocio con Fallback Inmediato de Onboarding
   const {
     business,
     saving: savingConfig,
@@ -55,8 +63,11 @@ export const CockpitPage: React.FC<CockpitProps> = ({ partnerName, onLogout, ini
     updateClabePayout,
     updateBannerUrl,
     updateStorefrontConfig,
-  } = useBusinessConfig()
-  const isBusinessOpen = business ? business.isOpen : true
+  } = useBusinessConfig(undefined, partnerBusiness ? {
+    name: partnerBusiness,
+    type: partnerType || 'barberia',
+  } : undefined)
+  const isBusinessOpen = business ? business.isOpen : false
 
   // Preset dinámico por giro de negocio (Multimodalidad)
   const currentCategoryKey = (business?.type || 'barberia').toLowerCase()
