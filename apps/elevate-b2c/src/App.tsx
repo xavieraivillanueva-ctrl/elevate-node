@@ -1,9 +1,10 @@
-﻿import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import './index.css'
 import { LoginPage } from './pages/LoginPage'
 import { LobbyPage } from './pages/LobbyPage'
 import { BusinessPage } from './pages/BusinessPage'
 import { AppointmentsPage } from './pages/AppointmentsPage'
+import { ProfilePage } from './pages/ProfilePage'
 import { supabase } from './lib/supabase'
 
 type View = 'login' | 'lobby' | 'business'
@@ -46,6 +47,12 @@ export default function App() {
       {/* Vista principal según la pestaña o selección de negocio */}
       {tab === 'citas' ? (
         <AppointmentsPage onExplore={() => { setTab('inicio'); setView('lobby'); setSelectedBiz(null) }} />
+      ) : tab === 'perfil' || tab === 'ajustes' ? (
+        <ProfilePage
+          userEmail={user?.email || 'cliente@elevatenode.com'}
+          userName={user?.email?.split('@')[0] || 'Cliente'}
+          onGoToAppointments={() => setTab('citas')}
+        />
       ) : view === 'business' && selectedBiz ? (
         <BusinessPage
           businessId={selectedBiz}
