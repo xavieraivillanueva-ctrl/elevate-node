@@ -26,8 +26,39 @@ const bgStyles = {
 }
 
 const TIMES = ['09:00','09:30','10:00','10:30','11:00','11:30','12:00','12:30','14:00','14:30','15:00','15:30','16:00','16:30','17:00']
-const DAYS  = ['D','L','M','X','J','V','S']
-const MARCH = Array.from({ length: 31 }, (_, i) => i + 1)
+
+interface DateSlot {
+  dayNumber: number
+  dayName: string
+  monthName: string
+  fullDateStr: string // YYYY-MM-DD
+  isAvailable: boolean
+}
+
+// Genera los próximos 14 días a partir de hoy
+function generateDateSlots(): DateSlot[] {
+  const daysShort = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
+  const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
+  const slots: DateSlot[] = []
+  const today = new Date()
+
+  for (let i = 0; i < 14; i++) {
+    const d = new Date(today)
+    d.setDate(today.getDate() + i)
+    const yyyy = d.getFullYear()
+    const mm = String(d.getMonth() + 1).padStart(2, '0')
+    const dd = String(d.getDate()).padStart(2, '0')
+
+    slots.push({
+      dayNumber: d.getDate(),
+      dayName: i === 0 ? 'Hoy' : i === 1 ? 'Mañ' : daysShort[d.getDay()],
+      monthName: months[d.getMonth()],
+      fullDateStr: `${yyyy}-${mm}-${dd}`,
+      isAvailable: d.getDay() !== 0, // Cerrado los domingos
+    })
+  }
+  return slots
+}
 
 interface BusinessPageProps {
   businessId: string
@@ -43,10 +74,14 @@ export const BusinessPage: React.FC<BusinessPageProps> = ({ businessId, onBack, 
   const fallbackBiz = BUSINESSES.find(b => b.id === businessId || b.slug === businessId) || BUSINESSES[0]
   const biz = liveBiz || fallbackBiz
 
+  const [dateSlots] = useState<DateSlot[]>(() => generateDateSlots())
   const [step, setStep] = useState<Step>('home')
   const [selectedService, setSelectedService] = useState<Service | null>(null)
   const [selectedStaff, setSelectedStaff] = useState<StaffMember | null>(null)
-  const [selectedDay, setSelectedDay] = useState<number>(11)
+  const [selectedSlot, setSelectedSlot] = useState<DateSlot>(() => {
+    const slots = generateDateSlots()
+    return slots.find(s => s.isAvailable) || slots[0]
+  })
   const [selectedTime, setSelectedTime] = useState<string | null>(null)
   const [bannerIdx, setBannerIdx] = useState(0)
 
@@ -61,7 +96,6 @@ export const BusinessPage: React.FC<BusinessPageProps> = ({ businessId, onBack, 
     setStep('home')
     setSelectedService(null)
     setSelectedStaff(null)
-    setSelectedDay(11)
     setSelectedTime(null)
     setClientPhone('')
     setClientEmail('')
@@ -166,36 +200,41 @@ export const BusinessPage: React.FC<BusinessPageProps> = ({ businessId, onBack, 
             <div className="space-y-5">
               <h2 className="text-lg font-black text-[#0A1628]">Selecciona Fecha y Hora</h2>
 
-              {/* Mini calendario */}
+              {/* Selector de Fecha Dinámico */}
               <div className="bg-white rounded-2xl border border-[#E2E6EC] p-4">
                 <div className="flex items-center justify-between mb-3">
-                  <button className="p-1 hover:bg-[#F0F2F5] rounded-lg"><ChevronLeft className="w-4 h-4 text-[#0A1628]" /></button>
-                  <p className="text-sm font-black text-[#0A1628]">Marzo 2023</p>
-                  <button className="p-1 hover:bg-[#F0F2F5] rounded-lg"><ChevronRight className="w-4 h-4 text-[#0A1628]" /></button>
+                  <p className="text-xs font-black text-[#0A1628] uppercase tracking-wider">Fecha de la Cita</p>
+                  <span className="text-xs font-bold text-[#D4A017]">{selectedSlot.dayName} {selectedSlot.dayNumber} {selectedSlot.monthName}</span>
                 </div>
-                <div className="grid grid-cols-7 gap-1 mb-2">
-                  {DAYS.map(d => <div key={d} className="text-center text-[10px] font-bold text-[#6B7B8F]">{d}</div>)}
-                </div>
-                <div className="grid grid-cols-7 gap-1">
-                  {MARCH.map(d => (
-                    <button
-                      key={d}
-                      onClick={() => setSelectedDay(d)}
-                      className={`aspect-square rounded-full text-xs font-bold transition flex items-center justify-center ${
-                        d === selectedDay
-                          ? 'bg-[#0A1628] text-white shadow'
-                          : d < 9 ? 'text-[#C0C9D6]' : 'text-[#0A1628] hover:bg-[#F0F2F5]'
-                      }`}
-                    >
-                      {d}
-                    </button>
-                  ))}
+
+                <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none snap-x">
+                  {dateSlots.map((slot) => {
+                    const isSelected = selectedSlot.fullDateStr === slot.fullDateStr
+                    return (
+                      <button
+                        key={slot.fullDateStr}
+                        onClick={() => slot.isAvailable && setSelectedSlot(slot)}
+                        disabled={!slot.isAvailable}
+                        className={`snap-start shrink-0 w-16 py-3 rounded-2xl border text-center transition flex flex-col items-center justify-center gap-0.5 ${
+                          isSelected
+                            ? 'bg-[#0A1628] text-white border-[#0A1628] shadow-md'
+                            : slot.isAvailable
+                              ? 'bg-[#F8F9FB] text-[#0A1628] border-[#E2E6EC] hover:border-[#0A1628]'
+                              : 'bg-gray-100 text-gray-300 border-transparent cursor-not-allowed opacity-50'
+                        }`}
+                      >
+                        <span className="text-[10px] font-black uppercase tracking-wider">{slot.dayName}</span>
+                        <span className="text-base font-black leading-none">{slot.dayNumber}</span>
+                        <span className="text-[9px] font-bold opacity-80">{slot.monthName}</span>
+                      </button>
+                    )
+                  })}
                 </div>
               </div>
 
               {/* Horarios */}
               <div className="bg-white rounded-2xl border border-[#E2E6EC] p-4">
-                <p className="text-xs font-black text-[#0A1628] uppercase tracking-wider mb-3">Tiempo y Hora</p>
+                <p className="text-xs font-black text-[#0A1628] uppercase tracking-wider mb-3">Horarios Disponibles</p>
                 <div className="grid grid-cols-4 gap-2">
                   {TIMES.map(t => (
                     <button
@@ -233,7 +272,7 @@ export const BusinessPage: React.FC<BusinessPageProps> = ({ businessId, onBack, 
                 <p className="text-xs font-black text-[#6B7B8F] uppercase tracking-wider">Resumen de tu cita</p>
                 <div className="flex justify-between text-sm"><span className="text-[#6B7B8F]">Especialista</span><span className="font-bold text-[#0A1628]">{selectedStaff?.name}</span></div>
                 <div className="flex justify-between text-sm"><span className="text-[#6B7B8F]">Servicio</span><span className="font-bold text-[#0A1628]">{selectedService?.name}</span></div>
-                <div className="flex justify-between text-sm"><span className="text-[#6B7B8F]">Fecha</span><span className="font-bold text-[#0A1628]">{selectedDay} Marzo · {selectedTime}</span></div>
+                <div className="flex justify-between text-sm"><span className="text-[#6B7B8F]">Fecha</span><span className="font-bold text-[#0A1628]">{selectedSlot.dayName} {selectedSlot.dayNumber} {selectedSlot.monthName} · {selectedTime} hrs</span></div>
                 <div className="h-px bg-[#E2E6EC] my-1" />
                 <div className="flex justify-between text-base"><span className="font-black text-[#0A1628]">Total</span><span className="font-black" style={{ color: '#D4A017' }}>${selectedService?.price.toLocaleString()} MXN</span></div>
               </div>
@@ -286,7 +325,7 @@ export const BusinessPage: React.FC<BusinessPageProps> = ({ businessId, onBack, 
                       clientName,
                       clientPhone,
                       clientEmail,
-                      appointmentDate: `2026-03-${String(selectedDay).padStart(2, '0')}`,
+                      appointmentDate: selectedSlot.fullDateStr,
                       timeSlot: selectedTime,
                     }}
                     isSubmitting={bookingState === 'loading'}
@@ -295,7 +334,6 @@ export const BusinessPage: React.FC<BusinessPageProps> = ({ businessId, onBack, 
                     }}
                     onSuccess={async (paymentIntentId) => {
                       if (!selectedStaff || !selectedTime) return
-                      const dateStr = `2026-03-${String(selectedDay).padStart(2, '0')}`
                       const ok = await insertAppointment({
                         businessId: biz.id,
                         businessSlug: biz.slug,
@@ -305,7 +343,7 @@ export const BusinessPage: React.FC<BusinessPageProps> = ({ businessId, onBack, 
                         clientName,
                         clientPhone,
                         clientEmail,
-                        appointmentDate: dateStr,
+                        appointmentDate: selectedSlot.fullDateStr,
                         timeSlot: selectedTime,
                         totalPrice: selectedService.price,
                       })
@@ -332,7 +370,7 @@ export const BusinessPage: React.FC<BusinessPageProps> = ({ businessId, onBack, 
                 <div className="flex justify-between text-sm"><span className="text-[#6B7B8F]">Negocio</span><span className="font-bold text-[#0A1628]">{biz.name}</span></div>
                 <div className="flex justify-between text-sm"><span className="text-[#6B7B8F]">Especialista</span><span className="font-bold text-[#0A1628]">{selectedStaff?.name}</span></div>
                 <div className="flex justify-between text-sm"><span className="text-[#6B7B8F]">Servicio</span><span className="font-bold text-[#0A1628]">{selectedService?.name}</span></div>
-                <div className="flex justify-between text-sm"><span className="text-[#6B7B8F]">Fecha</span><span className="font-bold text-[#0A1628]">{selectedDay} Marzo 2023 · {selectedTime}</span></div>
+                <div className="flex justify-between text-sm"><span className="text-[#6B7B8F]">Fecha</span><span className="font-bold text-[#0A1628]">{selectedSlot.dayName} {selectedSlot.dayNumber} {selectedSlot.monthName} · {selectedTime} hrs</span></div>
                 <div className="h-px bg-[#E2E6EC]" />
                 <div className="flex justify-between text-base"><span className="font-black text-[#0A1628]">Precio</span><span className="font-black" style={{ color: '#D4A017' }}>${selectedService?.price.toLocaleString()} MXN</span></div>
               </div>
@@ -420,16 +458,22 @@ export const BusinessPage: React.FC<BusinessPageProps> = ({ businessId, onBack, 
               <MapPin className="w-4 h-4 text-[#D4A017] shrink-0" />
               <span className="font-medium">{biz.address} · {biz.city}</span>
             </div>
-            <button className="text-sm font-bold text-[#D4A017] text-right hover:underline flex items-center justify-end gap-1">
+            <button
+              onClick={() => {
+                const query = encodeURIComponent(`${biz.name} ${biz.address} ${biz.city}`)
+                window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, '_blank')
+              }}
+              className="text-sm font-bold text-[#D4A017] text-right hover:underline flex items-center justify-end gap-1 cursor-pointer"
+            >
               Maps <ChevronRight className="w-3 h-3" />
             </button>
             <div className="flex items-center gap-2 text-sm text-[#1A2B45]">
               <Clock className="w-4 h-4 text-[#D4A017] shrink-0" />
               <span className="font-medium">{biz.schedule}</span>
             </div>
-            <button className="text-sm font-bold text-[#D4A017] text-right hover:underline flex items-center justify-end gap-1">
-              Ver horario <ChevronRight className="w-3 h-3" />
-            </button>
+            <span className="text-xs font-bold text-emerald-600 text-right">
+              {biz.isOpen ? 'Abierto Ahora' : 'Cerrado'}
+            </span>
           </div>
         </section>
 
@@ -492,27 +536,6 @@ export const BusinessPage: React.FC<BusinessPageProps> = ({ businessId, onBack, 
           </p>
         </div>
       </main>
-
-      {/* ── Bottom Tab Bar ────────────────────────────── */}
-      <nav className="fixed bottom-0 inset-x-0 bg-white border-t border-[#E2E6EC] z-30 max-w-2xl mx-auto">
-        <div className="flex">
-          {(['inicio', 'citas', 'perfil', 'ajustes'] as const).map(t => {
-            const icons: Record<typeof t, string> = { inicio: '🏠', citas: '📅', perfil: '👤', ajustes: '⚙️' }
-            const labels: Record<typeof t, string> = { inicio: 'Inicio', citas: 'Citas', perfil: 'Perfil', ajustes: 'Ajustes' }
-            return (
-              <button
-                key={t}
-                onClick={() => onTabChange(t)}
-                className={`flex-1 flex flex-col items-center gap-1 py-3 transition ${tab === t ? 'text-[#0A1628]' : 'text-[#A0ADB8]'}`}
-              >
-                <span className="text-lg">{icons[t]}</span>
-                <span className={`text-[10px] font-bold ${tab === t ? 'text-[#0A1628]' : 'text-[#A0ADB8]'}`}>{labels[t]}</span>
-                {tab === t && <div className="w-1 h-1 rounded-full bg-[#D4A017]" />}
-              </button>
-            )
-          })}
-        </div>
-      </nav>
     </div>
   )
 }

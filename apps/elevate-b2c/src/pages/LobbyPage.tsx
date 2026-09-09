@@ -111,12 +111,16 @@ export const LobbyPage: React.FC<LobbyPageProps> = ({ onSelectBusiness }) => {
                     onClick={() => onSelectBusiness(biz.id)}
                     className="card-hover w-full bg-white rounded-2xl border border-[#E2E6EC] p-4 text-left flex items-center gap-4 shadow-sm"
                   >
-                    {/* Logo placeholder con inicial */}
+                    {/* Logo con fallback de inicial */}
                     <div
-                      className="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl shrink-0 shadow-inner"
+                      className="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl shrink-0 shadow-inner overflow-hidden"
                       style={{ background: `linear-gradient(135deg, ${biz.primaryColor}18, ${biz.accentColor}22)`, border: `1.5px solid ${biz.primaryColor}22` }}
                     >
-                      <span>{cat?.icon || '🏪'}</span>
+                      {biz.logoUrl ? (
+                        <img src={biz.logoUrl} alt={biz.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <span>{cat?.icon || '🏪'}</span>
+                      )}
                     </div>
 
                     {/* Info */}
