@@ -30,7 +30,12 @@ export interface AppPreviewModalProps {
     schedule: string
     isOpen: boolean
     bannerUrl?: string
+    logoUrl?: string
     type?: string
+    primaryColor?: string
+    accentColor?: string
+    ctaText?: string
+    promoBanners?: Array<{ id: string; title: string; subtitle: string; tag?: string; price?: string; imageUrl?: string; bgStyle?: 'gold' | 'navy' | 'teal' }>
   }
   services: PreviewService[]
   staff: PreviewStaff[]
@@ -69,6 +74,10 @@ export const AppPreviewModal: React.FC<AppPreviewModalProps> = ({
   // Filtrar solo servicios activos si la propiedad existe
   const activeServices = services.filter(s => s.isActive !== false)
 
+  const primaryCol = business.primaryColor || '#0A1628'
+  const accentCol = business.accentColor || '#D4A017'
+  const ctaBtnText = business.ctaText || '✦ Agendar Cita en Línea'
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 md:p-6 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
       
@@ -98,61 +107,57 @@ export const AppPreviewModal: React.FC<AppPreviewModalProps> = ({
           {/* Muescas físicas del chasis */}
           <div className="absolute -left-[12px] top-24 w-[3px] h-9 bg-[#2A3447] rounded-l" />
           <div className="absolute -left-[12px] top-36 w-[3px] h-12 bg-[#2A3447] rounded-l" />
-          <div className="absolute -left-[12px] top-52 w-[3px] h-12 bg-[#2A3447] rounded-l" />
-          <div className="absolute -right-[12px] top-32 w-[3px] h-16 bg-[#2A3447] rounded-r" />
+          <div className="absolute -right-[12px] top-28 w-[3px] h-14 bg-[#2A3447] rounded-r" />
 
-          {/* ── Dynamic Island & iOS Status Bar ─────────── */}
-          <div className="pt-2 px-6 pb-1 bg-[#0A1628] flex items-center justify-between text-white shrink-0 z-20">
-            <span className="text-xs font-semibold tracking-tight">9:41</span>
+          {/* ── Pantalla del iPhone (Contenedor iOS) ── */}
+          <div className="flex-1 bg-[#F0F2F5] flex flex-col overflow-y-auto relative scrollbar-none">
             
-            {/* Dynamic Island pill */}
-            <div className="w-24 h-5 bg-black rounded-full flex items-center justify-end px-2 gap-1.5 shadow-inner">
-              <div className="w-2 h-2 rounded-full bg-[#0D1B2E] border border-white/20" />
-              <div className="w-1.5 h-1.5 rounded-full bg-blue-900/60" />
-            </div>
-
-            {/* iOS System Icons */}
-            <div className="flex items-center gap-1.5 text-xs">
-              <Wifi className="w-3 h-3" />
-              <Battery className="w-3.5 h-3.5" />
-            </div>
-          </div>
-
-          {/* ── Screen Body (B2C Live View) ─────────────── */}
-          <div className="flex-1 overflow-y-auto bg-[#F4F6F9] text-[#0A1628] scrollbar-thin scrollbar-thumb-gray-300">
-
-            {/* Header de la App B2C */}
-            <header className="bg-white border-b border-[#E2E6EC] px-4 py-2.5 sticky top-0 z-10 flex items-center justify-between shadow-xs">
-              <div className="flex items-center gap-2 min-w-0">
-                <ElevateLogo variant="light" size="sm" showTagline={false} />
-                <div className="min-w-0">
-                  <p className="text-xs font-black text-[#0A1628] truncate leading-tight">
-                    {business.name || 'Tu Negocio'}
-                  </p>
-                  <p className="text-[10px] text-[#6B7B8F] capitalize">
-                    {business.type || 'Belleza y Cuidado'}
-                  </p>
-                </div>
+            {/* iOS Status Bar */}
+            <div className="sticky top-0 z-30 bg-white/90 backdrop-blur-md pt-2 px-6 pb-1 flex items-center justify-between text-black text-[11px] font-semibold tracking-tight border-b border-black/5">
+              <span>9:41</span>
+              
+              {/* Dynamic Island simulada */}
+              <div className="w-20 h-4 bg-black rounded-full mx-auto -mt-1 flex items-center justify-end px-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
               </div>
 
-              {/* Status Abierto/Cerrado (Modo Borrador vs Publicado) */}
-              <div className="shrink-0">
+              <div className="flex items-center gap-1.5">
+                <Wifi className="w-3 h-3" />
+                <span className="text-[9px] font-bold">5G</span>
+                <Battery className="w-3.5 h-3.5" />
+              </div>
+            </div>
+
+            {/* Header del Marketplace B2C */}
+            <header className="bg-white px-4 py-2.5 flex items-center justify-between border-b border-[#E2E6EC] sticky top-7 z-20 shadow-xs">
+              <div className="flex items-center gap-2">
+                {business.logoUrl ? (
+                  <img src={business.logoUrl} alt="Logo" className="w-6 h-6 rounded-lg object-contain" />
+                ) : (
+                  <ElevateLogo variant="light" size="sm" showTagline={false} />
+                )}
+                <span className="text-[10px] font-black uppercase tracking-wider text-[#0A1628]">
+                  {business.type || 'Elevate'}
+                </span>
+              </div>
+              <div>
                 {business.isOpen ? (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black bg-emerald-50 text-emerald-600 border border-emerald-200">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                    Abierto
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" /> Abierto
                   </span>
                 ) : (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black bg-amber-50 text-amber-700 border border-amber-200">
-                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-100 text-amber-800 border border-amber-300">
                     Pausado
                   </span>
                 )}
               </div>
             </header>
 
-            {/* Hero Banner del Negocio */}
-            <div className="relative h-36 bg-gradient-to-r from-[#0D1B2E] via-[#11233E] to-[#0A1628] overflow-hidden flex flex-col justify-end p-4">
+            {/* Hero Banner del Negocio con Estilos Dinámicos */}
+            <div
+              className="relative h-36 overflow-hidden flex flex-col justify-end p-4 transition-colors"
+              style={{ backgroundColor: primaryCol }}
+            >
               {business.bannerUrl ? (
                 <img
                   src={business.bannerUrl}
@@ -160,12 +165,15 @@ export const AppPreviewModal: React.FC<AppPreviewModalProps> = ({
                   className="absolute inset-0 w-full h-full object-cover opacity-50"
                 />
               ) : (
-                <div className="absolute inset-0 opacity-20 bg-[radial-gradient(#00F0FF_1px,transparent_1px)] [background-size:12px_12px]" />
+                <div className="absolute inset-0 opacity-20 bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:12px_12px]" />
               )}
-              <div className="absolute inset-0 bg-gradient-to-t from-[#0A1628] via-transparent to-transparent opacity-85" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
               
               <div className="relative z-10">
-                <span className="inline-block px-2 py-0.5 bg-[#D4A017] text-[#0A1628] text-[9px] font-black rounded-full uppercase tracking-wider mb-1">
+                <span
+                  className="inline-block px-2 py-0.5 text-[9px] font-black rounded-full uppercase tracking-wider mb-1 text-black shadow-xs"
+                  style={{ backgroundColor: accentCol }}
+                >
                   ✦ EXPERIENCIA VERIFICADA
                 </span>
                 <h2 className="text-white font-black text-base leading-tight drop-shadow-sm">
@@ -176,6 +184,39 @@ export const AppPreviewModal: React.FC<AppPreviewModalProps> = ({
                 </p>
               </div>
             </div>
+
+            {/* Banners Promocionales si existen */}
+            {business.promoBanners && business.promoBanners.length > 0 && (
+              <div className="p-3 bg-[#F8FAFC] border-b border-[#E2E6EC] space-y-2">
+                <p className="text-[10px] font-black uppercase tracking-wider text-[#6B7B8F]">Promociones Especiales</p>
+                <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+                  {business.promoBanners.map(b => (
+                    <div
+                      key={b.id}
+                      className="shrink-0 w-52 rounded-xl p-3 text-white relative overflow-hidden shadow-xs"
+                      style={{ backgroundColor: primaryCol }}
+                    >
+                      {b.imageUrl && (
+                        <img src={b.imageUrl} alt={b.title} className="absolute inset-0 w-full h-full object-cover opacity-30" />
+                      )}
+                      <div className="relative z-10">
+                        {b.tag && (
+                          <span
+                            className="text-[8px] font-black px-1.5 py-0.5 rounded text-black uppercase mb-1 inline-block"
+                            style={{ backgroundColor: accentCol }}
+                          >
+                            {b.tag}
+                          </span>
+                        )}
+                        <p className="text-xs font-black truncate">{b.title}</p>
+                        <p className="text-[10px] opacity-80 truncate">{b.subtitle}</p>
+                        {b.price && <p className="text-xs font-black mt-1" style={{ color: accentCol }}>{b.price}</p>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Info rápida del Local */}
             <div className="bg-white px-4 py-2.5 border-b border-[#E2E6EC] text-[11px] space-y-1.5">
@@ -295,10 +336,11 @@ export const AppPreviewModal: React.FC<AppPreviewModalProps> = ({
           <div className="bg-white/95 backdrop-blur-md border-t border-[#E2E6EC] px-4 pt-2 pb-3 shrink-0">
             <button
               type="button"
-              className="w-full py-2.5 rounded-xl bg-[#0A1628] text-white text-xs font-black uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-md hover:bg-[#11233E] transition"
+              style={{ backgroundColor: primaryCol }}
+              className="w-full py-2.5 rounded-xl text-white text-xs font-black uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-md transition hover:opacity-90 cursor-pointer"
             >
-              <CheckCircle2 className="w-3.5 h-3.5 text-[#D4A017]" />
-              <span>✦ Agendar Cita en Línea</span>
+              <CheckCircle2 className="w-3.5 h-3.5" style={{ color: accentCol }} />
+              <span>{ctaBtnText}</span>
             </button>
             
             {/* iOS Home Bar */}

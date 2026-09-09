@@ -28,7 +28,7 @@ export default function App() {
     return <div className="min-h-screen bg-[#070E1A] flex items-center justify-center text-[#00F0FF]">Cargando...</div>
   }
 
-  const [initialSection, setInitialSection] = useState<'cockpit' | 'servicios' | 'staff' | 'contabilidad' | 'inventario' | 'ajustes'>('cockpit')
+  const [initialSection, setInitialSection] = useState<'cockpit' | 'escaparate' | 'servicios' | 'staff' | 'contabilidad' | 'inventario' | 'ajustes'>('cockpit')
 
   if (!session && !demoUser) {
     return (

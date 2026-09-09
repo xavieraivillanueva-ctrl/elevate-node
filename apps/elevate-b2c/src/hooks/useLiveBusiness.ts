@@ -1,25 +1,29 @@
-﻿import { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { BUSINESSES as fallbackBusinesses } from '../data/businesses'
 import type { Business, Service, StaffMember } from '../types'
 
-export function useLiveBusiness(slug: string = 'urban-barberia') {
+export function useLiveBusiness(identifier: string = 'urban-barberia') {
   const [business, setBusiness] = useState<Business | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function loadData() {
       try {
-        // 1. Obtener negocio por slug
-        const { data: bizData, error: bizError } = await supabase
-          .from('businesses')
-          .select('*')
-          .eq('slug', slug)
-          .single()
+        const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(identifier)
+        
+        let query = supabase.from('businesses').select('*')
+        if (isUuid) {
+          query = query.eq('id', identifier)
+        } else {
+          query = query.eq('slug', identifier)
+        }
+
+        const { data: bizData, error: bizError } = await query.single()
 
         if (bizError || !bizData) {
           console.warn('Usando fallback local para negocio:', bizError)
-          const fallback = fallbackBusinesses.find(b => b.slug === slug) || fallbackBusinesses[0]
+          const fallback = fallbackBusinesses.find(b => b.id === identifier || b.slug === identifier) || fallbackBusinesses[0]
           setBusiness(fallback)
           setLoading(false)
           return
@@ -32,14 +36,14 @@ export function useLiveBusiness(slug: string = 'urban-barberia') {
           .eq('business_id', bizData.id)
           .eq('is_active', true)
 
-        // 3. Obtener especialistas / barberos
+        // 3. Obtener especialistas
         const { data: staffData } = await supabase
           .from('staff_specialists')
           .select('*')
           .eq('business_id', bizData.id)
 
-        // Encontrar mock de diseño para enriquecer banners visuales
-        const localMock = fallbackBusinesses.find(b => b.slug === slug) || fallbackBusinesses[0]
+        // Mock de diseño fallback
+        const localMock = fallbackBusinesses.find(b => b.slug === bizData.slug || b.id === bizData.id) || fallbackBusinesses[0]
 
         const mappedServices: Service[] = (servicesData && servicesData.length > 0)
           ? servicesData.map(s => ({
@@ -50,7 +54,7 @@ export function useLiveBusiness(slug: string = 'urban-barberia') {
               price: Number(s.price),
               durationMinutes: s.duration_minutes,
               description: s.description || '',
-              icon: s.category === 'Barba' ? '🪒' : s.category === 'Combo' ? '⭐' : '✂️',
+              icon: s.category === 'Barba' ? '🪒' : s.category === 'Combo' ? '⭐' : s.category === 'Spa' ? '💆' : '✂️',
             }))
           : localMock.services
 
@@ -63,10 +67,27 @@ export function useLiveBusiness(slug: string = 'urban-barberia') {
               status: st.status as any,
               retentionRate: Number(st.retention_rate || 60),
               avgDurationMinutes: st.avg_duration_minutes || 35,
-              avatarUrl: st.avatar_url || localMock.staff[0].avatarUrl,
+              avatarUrl: st.avatar_url || localMock.staff[0]?.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
               scheduleBlocks: localMock.staff[0]?.scheduleBlocks || [],
             }))
           : localMock.staff
+
+        const theme = bizData.theme_config || {}
+        const primaryColor = theme.primary_color || theme.primaryColor || '#0A1628'
+        const accentColor = theme.accent_color || theme.accentColor || '#D4A017'
+        const ctaText = theme.cta_text || theme.ctaText || (bizData.type === 'spa' ? '✦ RESERVAR SESIÓN DE SPA' : '✦ AGENDAR CITA AHORA')
+
+        const banners = (theme.promo_banners && theme.promo_banners.length > 0)
+          ? theme.promo_banners.map((b: any, idx: number) => ({
+              id: b.id || `promo-${idx}`,
+              title: b.title || bizData.name,
+              subtitle: b.subtitle || 'Experiencia exclusiva y personalizada',
+              tag: b.tag || 'DESTACADO',
+              bgStyle: (b.bgStyle || 'gold') as any,
+              price: b.price || '',
+              imageUrl: b.imageUrl,
+            }))
+          : localMock.banners
 
         const fullBusiness: Business = {
           id: bizData.id,
@@ -79,10 +100,10 @@ export function useLiveBusiness(slug: string = 'urban-barberia') {
           isOpen: bizData.is_open,
           rating: 4.9,
           reviewCount: 312,
-          primaryColor: '#0A1628',
-          accentColor: '#D4A017',
-          ctaText: '✦ AGENDAR CITA URBANA',
-          banners: localMock.banners,
+          primaryColor,
+          accentColor,
+          ctaText,
+          banners,
           services: mappedServices,
           staff: mappedStaff,
         }
@@ -90,7 +111,7 @@ export function useLiveBusiness(slug: string = 'urban-barberia') {
         setBusiness(fullBusiness)
       } catch (err) {
         console.error('Error al cargar datos de Supabase:', err)
-        const fallback = fallbackBusinesses.find(b => b.slug === slug) || fallbackBusinesses[0]
+        const fallback = fallbackBusinesses.find(b => b.id === identifier || b.slug === identifier) || fallbackBusinesses[0]
         setBusiness(fallback)
       } finally {
         setLoading(false)
@@ -98,7 +119,7 @@ export function useLiveBusiness(slug: string = 'urban-barberia') {
     }
 
     loadData()
-  }, [slug])
+  }, [identifier])
 
   return { business, loading }
 }

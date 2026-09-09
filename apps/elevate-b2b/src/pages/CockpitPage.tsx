@@ -3,17 +3,19 @@ import { ElevateLogo } from '../components/ElevateLogo'
 import {
   TrendingUp, AlertTriangle, Zap, Power, BarChart2, Users, ShoppingCart, Settings,
   LogOut, Bell, DollarSign, Clock, ChevronRight, Check, Save, Loader2, Smartphone,
-  Pencil, Upload, Scissors, Plus, Globe, PauseCircle, Rocket, Camera, Sparkles, X
+  Pencil, Upload, Scissors, Plus, Globe, PauseCircle, Rocket, Camera, Sparkles, X,
+  Store, Palette, Image, MousePointerClick
 } from 'lucide-react'
 import { METRICS, STAFF, STOCK_ALERTS, HOURS, AI_PROMO, PARTNER } from '../data/dashboard'
+import { CATEGORY_PRESETS } from '../data/categoryPresets'
 import { useRealtimeStaff } from '../hooks/useRealtimeStaff'
-import { useBusinessConfig } from '../hooks/useBusinessConfig'
+import { useBusinessConfig, PromoBanner } from '../hooks/useBusinessConfig'
 import { useManageStaff } from '../hooks/useManageStaff'
 import { useManageServices } from '../hooks/useManageServices'
 import { useStorageUpload } from '../hooks/useStorageUpload'
 import { AppPreviewModal } from '../components/AppPreviewModal'
 
-type Section = 'cockpit' | 'servicios' | 'staff' | 'contabilidad' | 'inventario' | 'ajustes'
+type Section = 'cockpit' | 'escaparate' | 'servicios' | 'staff' | 'contabilidad' | 'inventario' | 'ajustes'
 
 const statusConfig = {
   disponible: { label: 'Disponible', cellClass: 'cell-libre', color: '#00D4AA' },
@@ -52,8 +54,28 @@ export const CockpitPage: React.FC<CockpitProps> = ({ partnerName, onLogout, ini
     updateBusinessProfile,
     updateClabePayout,
     updateBannerUrl,
+    updateStorefrontConfig,
   } = useBusinessConfig()
   const isBusinessOpen = business ? business.isOpen : true
+
+  // Preset dinámico por giro de negocio (Multimodalidad)
+  const currentCategoryKey = (business?.type || 'barberia').toLowerCase()
+  const categoryPreset = CATEGORY_PRESETS[currentCategoryKey] || CATEGORY_PRESETS['barberia']
+
+  // 1.1 Estado del Escaparate B2C (Storefront Studio)
+  const [storefrontPrimaryColor, setStorefrontPrimaryColor] = useState(business?.primaryColor || categoryPreset.primaryColor)
+  const [storefrontAccentColor, setStorefrontAccentColor]   = useState(business?.accentColor || categoryPreset.accentColor)
+  const [storefrontCtaText, setStorefrontCtaText]           = useState(business?.ctaText || categoryPreset.defaultCtaText)
+  const [storefrontLogoUrl, setStorefrontLogoUrl]           = useState(business?.logoUrl || '')
+  const [storefrontBanners, setStorefrontBanners]           = useState<PromoBanner[]>(business?.promoBanners && business.promoBanners.length > 0 ? business.promoBanners : categoryPreset.defaultBanners.map((b, i) => ({ id: `b-${i}`, ...b })))
+  const [storefrontSaved, setStorefrontSaved]               = useState(false)
+  
+  // Nuevo banner modal o inputs
+  const [showAddBanner, setShowAddBanner]                   = useState(false)
+  const [newBannerTitle, setNewBannerTitle]                 = useState('')
+  const [newBannerSubtitle, setNewBannerSubtitle]           = useState('')
+  const [newBannerTag, setNewBannerTag]                     = useState('')
+  const [newBannerPrice, setNewBannerPrice]                 = useState('')
 
   // 2. Motor de Staff en Vivo (Base de Datos + Mutaciones)
   const {
@@ -96,28 +118,95 @@ export const CockpitPage: React.FC<CockpitProps> = ({ partnerName, onLogout, ini
   const [showAddService, setShowAddService] = useState(false)
   const [newSvcName, setNewSvcName]         = useState('')
   const [newSvcPrice, setNewSvcPrice]       = useState('')
-  const [newSvcCategory, setNewSvcCategory] = useState('Corte')
+  const [newSvcCategory, setNewSvcCategory] = useState(currentCategoryKey === 'spa' ? 'Masajes' : currentCategoryKey === 'nails' ? 'Uñas' : 'Corte')
   const [newSvcDuration, setNewSvcDuration] = useState('45')
 
   // 9. Edición / Añadir Staff
   const [showAddStaff, setShowAddStaff]     = useState(false)
   const [newStaffName, setNewStaffName]     = useState('')
-  const [newStaffRole, setNewStaffRole]     = useState('Especialista')
+  const [newStaffRole, setNewStaffRole]     = useState(currentCategoryKey === 'spa' ? 'Terapeuta' : currentCategoryKey === 'nails' ? 'Nail Artist' : 'Master Barber')
   const [newStaffAvatar, setNewStaffAvatar] = useState('')
 
   // 10. Referencias para subir archivos
   const bannerFileRef = useRef<HTMLInputElement>(null)
+  const logoFileRef = useRef<HTMLInputElement>(null)
   const avatarFileRefs = useRef<{ [key: string]: HTMLInputElement | null }>({})
   const [bannerSuccess, setBannerSuccess] = useState(false)
+  const [logoSuccess, setLogoSuccess] = useState(false)
 
   useEffect(() => {
     if (business) {
-      setEditName(business.name || PARTNER.businessName)
+      setEditName(business.name || (currentCategoryKey === 'spa' ? 'Spa Serenidad' : PARTNER.businessName))
       setEditAddress(business.address || PARTNER.address)
       setEditSubtitle(business.subtitle || '')
       setClabeInput(business.clabePayout || PARTNER.clabe)
+
+      if (business.primaryColor) setStorefrontPrimaryColor(business.primaryColor)
+      else setStorefrontPrimaryColor(categoryPreset.primaryColor)
+
+      if (business.accentColor) setStorefrontAccentColor(business.accentColor)
+      else setStorefrontAccentColor(categoryPreset.accentColor)
+
+      if (business.ctaText) setStorefrontCtaText(business.ctaText)
+      else setStorefrontCtaText(categoryPreset.defaultCtaText)
+
+      if (business.logoUrl) setStorefrontLogoUrl(business.logoUrl)
+      if (business.promoBanners && business.promoBanners.length > 0) {
+        setStorefrontBanners(business.promoBanners)
+      } else {
+        setStorefrontBanners(categoryPreset.defaultBanners.map((b, i) => ({ id: `b-${i}`, ...b })))
+      }
     }
-  }, [business])
+  }, [business, currentCategoryKey])
+
+  const handleSaveStorefront = async () => {
+    const ok = await updateStorefrontConfig({
+      primaryColor: storefrontPrimaryColor,
+      accentColor: storefrontAccentColor,
+      ctaText: storefrontCtaText,
+      logoUrl: storefrontLogoUrl,
+      promoBanners: storefrontBanners,
+    })
+    if (ok) {
+      setStorefrontSaved(true)
+      setTimeout(() => setStorefrontSaved(false), 3000)
+    }
+  }
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const publicUrl = await uploadMedia(file, 'banners')
+    if (publicUrl) {
+      setStorefrontLogoUrl(publicUrl)
+      await updateStorefrontConfig({ logoUrl: publicUrl })
+      setLogoSuccess(true)
+      setTimeout(() => setLogoSuccess(false), 3000)
+    }
+  }
+
+  const handleAddCustomBanner = () => {
+    if (!newBannerTitle.trim()) return
+    const newB: PromoBanner = {
+      id: `banner-${Date.now()}`,
+      title: newBannerTitle.trim(),
+      subtitle: newBannerSubtitle.trim() || 'Promoción especial',
+      tag: newBannerTag.trim() || 'Especial',
+      price: newBannerPrice.trim() || undefined,
+      bgStyle: 'teal',
+    }
+    const updated = [...storefrontBanners, newB]
+    setStorefrontBanners(updated)
+    setNewBannerTitle('')
+    setNewBannerSubtitle('')
+    setNewBannerTag('')
+    setNewBannerPrice('')
+    setShowAddBanner(false)
+  }
+
+  const handleRemoveBanner = (id: string) => {
+    setStorefrontBanners(prev => prev.filter(b => b.id !== id))
+  }
 
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -198,6 +287,7 @@ export const CockpitPage: React.FC<CockpitProps> = ({ partnerName, onLogout, ini
 
   const nav = [
     { id: 'cockpit',       icon: <BarChart2 className="w-4 h-4" />,    label: 'Cockpit' },
+    { id: 'escaparate',    icon: <Store className="w-4 h-4 text-[#00F0FF]" />, label: 'Escaparate B2C' },
     { id: 'servicios',    icon: <Scissors className="w-4 h-4" />,     label: 'Servicios' },
     { id: 'staff',         icon: <Users className="w-4 h-4" />,        label: 'Staff' },
     { id: 'contabilidad',  icon: <DollarSign className="w-4 h-4" />,   label: 'Contabilidad' },
@@ -365,21 +455,24 @@ export const CockpitPage: React.FC<CockpitProps> = ({ partnerName, onLogout, ini
             {/* Bottom grid: Alertas + IA + FASE 4 KILL SWITCH REDISEÑADO */}
             <div className="grid md:grid-cols-3 gap-4">
 
-              {/* Alertas de stock */}
+              {/* Alertas de stock adaptadas al giro */}
               <div className="bg-[#0D1B2E] border border-[#1C2F4A] rounded-2xl p-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <AlertTriangle className="w-4 h-4 text-[#F59E0B]" />
-                  <h4 className="text-sm font-black text-white">Inventario & Alertas</h4>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4 text-[#F59E0B]" />
+                    <h4 className="text-sm font-black text-white">Insumos ({categoryPreset.label})</h4>
+                  </div>
+                  <span className="text-[10px] text-[#00F0FF] font-bold">{categoryPreset.icon} Insumos Giro</span>
                 </div>
                 <div className="space-y-2">
-                  {STOCK_ALERTS.filter(a => a.severity === 'critica').map(a => (
+                  {categoryPreset.inventoryItems.filter(a => a.severity === 'critica').map(a => (
                     <div key={a.id} className="flex items-center gap-2 text-xs">
                       <AlertTriangle className="w-3 h-3 text-[#E53935] shrink-0" />
                       <span className="text-[#E8EDF5]">{a.item}</span>
                     </div>
                   ))}
                   <div className="h-px bg-[#1C2F4A] my-2" />
-                  {STOCK_ALERTS.filter(a => a.severity === 'sugerida').map(a => (
+                  {categoryPreset.inventoryItems.filter(a => a.severity === 'sugerida').map(a => (
                     <div key={a.id} className="flex items-center gap-2 text-xs">
                       <span className="w-3 h-3 rounded-full bg-[#F59E0B]/30 border border-[#F59E0B] shrink-0" />
                       <span className="text-[#8CA4C0]">{a.item}</span>
@@ -475,6 +568,289 @@ export const CockpitPage: React.FC<CockpitProps> = ({ partnerName, onLogout, ini
               </div>
 
             </div>
+          </main>
+        )}
+
+        {/* ─────────────────── STOREFRONT STUDIO: MI ESCAPARATE B2C ────────────────── */}
+        {section === 'escaparate' && (
+          <main className="flex-1 p-4 md:p-6 overflow-auto space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">{categoryPreset.icon}</span>
+                  <h2 className="text-lg font-black text-white">Mi Escaparate B2C (Storefront Studio)</h2>
+                </div>
+                <p className="text-xs text-[#8CA4C0] mt-0.5">
+                  Personaliza exactamente cómo verán los clientes tu negocio en la app ({categoryPreset.label})
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowPreviewModal(true)}
+                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#111D35] border border-[#00F0FF]/40 text-[#00F0FF] text-xs font-black uppercase tracking-wider hover:bg-[#00F0FF]/10 transition cursor-pointer"
+                >
+                  <Smartphone className="w-3.5 h-3.5" />
+                  <span>Simular Móvil</span>
+                </button>
+                <button
+                  type="button"
+                  disabled={savingConfig}
+                  onClick={handleSaveStorefront}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#00F0FF] text-[#070E1A] text-xs font-black uppercase tracking-wider hover:shadow-[0_0_15px_rgba(0,240,255,0.4)] transition cursor-pointer disabled:opacity-50"
+                >
+                  {savingConfig ? <Loader2 className="w-4 h-4 animate-spin" /> : storefrontSaved ? <Check className="w-4 h-4" /> : <Save className="w-4 h-4" />}
+                  <span>{storefrontSaved ? 'Guardado' : 'Guardar Escaparate'}</span>
+                </button>
+              </div>
+            </div>
+
+            {storefrontSaved && (
+              <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold flex items-center gap-2">
+                <Check className="w-4 h-4" /> Los cambios del escaparate se guardaron y sincronizaron con la nube de Elevate Node.
+              </div>
+            )}
+
+            {/* Grid de Personalización */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+
+              {/* Card 1: Paleta de Colores de Marca */}
+              <div className="bg-[#0D1B2E] border border-[#1C2F4A] rounded-2xl p-5 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Palette className="w-4 h-4 text-[#00F0FF]" />
+                    <h3 className="text-sm font-black text-white">Identidad Visual & Colores</h3>
+                  </div>
+                  <span className="text-[10px] text-[#8CA4C0] uppercase tracking-wider font-semibold">Giro: {categoryPreset.label}</span>
+                </div>
+
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-xs font-bold text-[#8CA4C0] uppercase block mb-1.5">Color Primario (Encabezados y Fondo)</label>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="color"
+                        value={storefrontPrimaryColor}
+                        onChange={e => setStorefrontPrimaryColor(e.target.value)}
+                        className="w-10 h-10 rounded-xl cursor-pointer bg-transparent border-0"
+                      />
+                      <input
+                        type="text"
+                        value={storefrontPrimaryColor}
+                        onChange={e => setStorefrontPrimaryColor(e.target.value)}
+                        className="bg-[#111D35] border border-[#1C2F4A] rounded-xl px-3 py-2 text-xs font-mono text-white flex-1 outline-none focus:border-[#00F0FF]"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-bold text-[#8CA4C0] uppercase block mb-1.5">Color de Acento (Botones y Badges)</label>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="color"
+                        value={storefrontAccentColor}
+                        onChange={e => setStorefrontAccentColor(e.target.value)}
+                        className="w-10 h-10 rounded-xl cursor-pointer bg-transparent border-0"
+                      />
+                      <input
+                        type="text"
+                        value={storefrontAccentColor}
+                        onChange={e => setStorefrontAccentColor(e.target.value)}
+                        className="bg-[#111D35] border border-[#1C2F4A] rounded-xl px-3 py-2 text-xs font-mono text-white flex-1 outline-none focus:border-[#00F0FF]"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Paleta sugerida con 1 clic */}
+                  <div className="pt-2">
+                    <p className="text-[10px] font-bold text-[#8CA4C0] uppercase mb-1.5">Paleta recomendada para {categoryPreset.label}:</p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setStorefrontPrimaryColor(categoryPreset.primaryColor)
+                        setStorefrontAccentColor(categoryPreset.accentColor)
+                      }}
+                      className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#111D35] border border-[#1C2F4A] hover:border-[#00F0FF] text-xs text-white transition cursor-pointer"
+                    >
+                      <span className="w-3 h-3 rounded-full" style={{ backgroundColor: categoryPreset.primaryColor }} />
+                      <span className="w-3 h-3 rounded-full" style={{ backgroundColor: categoryPreset.accentColor }} />
+                      <span>Restaurar recomendación ({categoryPreset.label})</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Card 2: Logotipo y Botón de Acción Principal (CTA) */}
+              <div className="bg-[#0D1B2E] border border-[#1C2F4A] rounded-2xl p-5 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <MousePointerClick className="w-4 h-4 text-[#E5A93C]" />
+                    <h3 className="text-sm font-black text-white">Botón de Reserva (CTA)</h3>
+                  </div>
+                  <span className="text-[10px] text-[#00F0FF] font-semibold flex items-center gap-1">
+                    <Pencil className="w-3 h-3" /> Editable
+                  </span>
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-[#8CA4C0] uppercase block mb-1.5">Texto del Botón en la App B2C</label>
+                  <input
+                    type="text"
+                    value={storefrontCtaText}
+                    onChange={e => setStorefrontCtaText(e.target.value)}
+                    placeholder="ej. ✦ RESERVAR SESIÓN DE SPA"
+                    className="w-full bg-[#111D35] border border-[#1C2F4A] rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-[#00F0FF]"
+                  />
+                  <p className="text-[10px] text-[#8CA4C0] mt-1">Este texto aparecerá en el botón principal flotante que presiona el cliente para agendar.</p>
+                </div>
+
+                {/* Subida de Logotipo Oficial */}
+                <div className="pt-2 border-t border-[#1C2F4A]">
+                  <label className="text-xs font-bold text-[#8CA4C0] uppercase block mb-1.5">Logotipo del Negocio</label>
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-xl bg-[#111D35] border border-[#1C2F4A] flex items-center justify-center overflow-hidden shrink-0">
+                      {storefrontLogoUrl ? (
+                        <img src={storefrontLogoUrl} alt="Logo" className="w-full h-full object-contain" />
+                      ) : (
+                        <Store className="w-5 h-5 text-[#8CA4C0]" />
+                      )}
+                    </div>
+
+                    <input
+                      type="file"
+                      accept="image/*"
+                      ref={logoFileRef}
+                      onChange={handleLogoUpload}
+                      className="hidden"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => logoFileRef.current?.click()}
+                      disabled={uploadingMedia}
+                      className="px-3 py-2 rounded-xl border border-[#1C2F4A] text-xs font-bold text-[#00F0FF] hover:bg-[#00F0FF]/10 transition flex items-center gap-1.5 cursor-pointer"
+                    >
+                      {uploadingMedia ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+                      <span>{storefrontLogoUrl ? 'Cambiar Logo' : 'Subir Logotipo'}</span>
+                    </button>
+                    {logoSuccess && <span className="text-[10px] text-emerald-400 font-bold">✓ Subido</span>}
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            {/* Card 3: Creador y Gestor de Banners Promocionales */}
+            <div className="bg-[#0D1B2E] border border-[#1C2F4A] rounded-2xl p-5 space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Image className="w-4 h-4 text-[#00D4AA]" />
+                  <h3 className="text-sm font-black text-white">Banners Promocionales en Portada</h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowAddBanner(!showAddBanner)}
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-[#00F0FF]/10 border border-[#00F0FF]/30 text-xs font-bold text-[#00F0FF] hover:bg-[#00F0FF]/20 transition cursor-pointer"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Nuevo Banner</span>
+                </button>
+              </div>
+
+              {showAddBanner && (
+                <div className="bg-[#111D35] border border-[#00F0FF]/30 rounded-xl p-4 space-y-3 animate-in fade-in duration-150">
+                  <h4 className="text-xs font-bold text-white uppercase tracking-wider">Crear Nuevo Banner</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[10px] font-bold text-[#8CA4C0] uppercase block mb-1">Título</label>
+                      <input
+                        type="text"
+                        placeholder="ej. 2x1 en Masaje de Espalda"
+                        value={newBannerTitle}
+                        onChange={e => setNewBannerTitle(e.target.value)}
+                        className="w-full bg-[#0D1B2E] border border-[#1C2F4A] rounded-lg px-2.5 py-1.5 text-xs text-white outline-none focus:border-[#00F0FF]"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-[#8CA4C0] uppercase block mb-1">Subtítulo</label>
+                      <input
+                        type="text"
+                        placeholder="ej. Solo martes y miércoles"
+                        value={newBannerSubtitle}
+                        onChange={e => setNewBannerSubtitle(e.target.value)}
+                        className="w-full bg-[#0D1B2E] border border-[#1C2F4A] rounded-lg px-2.5 py-1.5 text-xs text-white outline-none focus:border-[#00F0FF]"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-[#8CA4C0] uppercase block mb-1">Etiqueta (Tag)</label>
+                      <input
+                        type="text"
+                        placeholder="ej. Promo Spa / Más Vendido"
+                        value={newBannerTag}
+                        onChange={e => setNewBannerTag(e.target.value)}
+                        className="w-full bg-[#0D1B2E] border border-[#1C2F4A] rounded-lg px-2.5 py-1.5 text-xs text-white outline-none focus:border-[#00F0FF]"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-[#8CA4C0] uppercase block mb-1">Precio Promocional (Opcional)</label>
+                      <input
+                        type="text"
+                        placeholder="ej. $450 MXN"
+                        value={newBannerPrice}
+                        onChange={e => setNewBannerPrice(e.target.value)}
+                        className="w-full bg-[#0D1B2E] border border-[#1C2F4A] rounded-lg px-2.5 py-1.5 text-xs text-white outline-none focus:border-[#00F0FF]"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex justify-end gap-2 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowAddBanner(false)}
+                      className="px-3 py-1.5 rounded-lg text-xs font-bold text-[#8CA4C0] hover:text-white"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleAddCustomBanner}
+                      className="px-3.5 py-1.5 rounded-lg bg-[#00F0FF] text-[#070E1A] text-xs font-black uppercase cursor-pointer"
+                    >
+                      Añadir Banner
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {storefrontBanners.map(b => (
+                  <div
+                    key={b.id}
+                    className="p-3.5 rounded-xl border border-[#1C2F4A] bg-[#111D35] flex items-center justify-between gap-3 relative"
+                  >
+                    <div className="min-w-0 flex-1">
+                      {b.tag && (
+                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-[#00F0FF]/15 text-[#00F0FF] uppercase mb-1 inline-block">
+                          {b.tag}
+                        </span>
+                      )}
+                      <p className="text-xs font-black text-white truncate">{b.title}</p>
+                      <p className="text-[10px] text-[#8CA4C0] truncate">{b.subtitle}</p>
+                      {b.price && <p className="text-xs font-black text-[#E5A93C] mt-0.5">{b.price}</p>}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveBanner(b.id)}
+                      className="p-1.5 rounded-lg bg-[#1C2F4A]/60 text-[#8CA4C0] hover:text-[#E53935] transition cursor-pointer shrink-0"
+                      title="Eliminar Banner"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
           </main>
         )}
 
@@ -841,9 +1217,17 @@ export const CockpitPage: React.FC<CockpitProps> = ({ partnerName, onLogout, ini
         {/* ─────────────────── INVENTARIO ──────────────────── */}
         {section === 'inventario' && (
           <main className="flex-1 p-4 md:p-6 overflow-auto">
-            <h2 className="text-lg font-black text-white mb-5">Inventario & Alertas de Stock</h2>
+            <div className="flex items-center justify-between mb-5">
+              <div>
+                <h2 className="text-lg font-black text-white">Inventario & Insumos</h2>
+                <p className="text-xs text-[#8CA4C0]">Insumos esenciales optimizados para {categoryPreset.label} ({categoryPreset.icon})</p>
+              </div>
+              <span className="text-xs font-bold text-[#00F0FF] bg-[#00F0FF]/10 px-3 py-1 rounded-xl border border-[#00F0FF]/30">
+                Giro: {categoryPreset.label}
+              </span>
+            </div>
             <div className="bg-[#0D1B2E] border border-[#1C2F4A] rounded-2xl p-5">
-              {STOCK_ALERTS.map(a => (
+              {categoryPreset.inventoryItems.map(a => (
                 <div key={a.id} className={`flex items-center justify-between py-3 border-b border-[#1C2F4A] last:border-0 ${a.severity === 'critica' ? '' : 'opacity-70'}`}>
                   <div className="flex items-center gap-3">
                     <AlertTriangle className={`w-4 h-4 shrink-0 ${a.severity === 'critica' ? 'text-[#E53935]' : 'text-[#F59E0B]'}`} />
@@ -853,7 +1237,7 @@ export const CockpitPage: React.FC<CockpitProps> = ({ partnerName, onLogout, ini
                     </div>
                   </div>
                   <button className="text-xs px-3 py-1.5 rounded-lg border border-[#E5A93C]/40 text-[#E5A93C] hover:bg-[#E5A93C]/10 transition font-bold cursor-pointer">
-                    Comprar
+                    Reabastecer
                   </button>
                 </div>
               ))}
@@ -1038,13 +1422,18 @@ export const CockpitPage: React.FC<CockpitProps> = ({ partnerName, onLogout, ini
         isOpen={showPreviewModal}
         onClose={() => setShowPreviewModal(false)}
         business={{
-          name: editName || business?.name || PARTNER.businessName,
+          name: editName || business?.name || (currentCategoryKey === 'spa' ? 'Spa Serenidad' : PARTNER.businessName),
           subtitle: editSubtitle || business?.subtitle,
           address: editAddress || business?.address || PARTNER.address,
           schedule: business?.schedule || 'Lun a Sáb: 10:00 – 20:00',
           isOpen: isBusinessOpen,
           bannerUrl: business?.bannerUrl,
-          type: business?.type || 'Barbería',
+          logoUrl: storefrontLogoUrl,
+          type: categoryPreset.label || business?.type || 'Barbería',
+          primaryColor: storefrontPrimaryColor,
+          accentColor: storefrontAccentColor,
+          ctaText: storefrontCtaText,
+          promoBanners: storefrontBanners,
         }}
         services={activeServicesList}
         staff={activeStaffList}

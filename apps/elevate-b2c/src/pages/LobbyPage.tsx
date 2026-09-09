@@ -1,7 +1,8 @@
 import React, { useState } from 'react'
 import { ElevateLogo } from '../components/ElevateLogo'
-import { Search, MapPin, Star, Clock, ChevronRight } from 'lucide-react'
-import { BUSINESSES, CATEGORIES } from '../data/businesses'
+import { Search, MapPin, Star, Clock, ChevronRight, Loader2 } from 'lucide-react'
+import { CATEGORIES } from '../data/businesses'
+import { useLiveBusinesses } from '../hooks/useLiveBusinesses'
 import type { BusinessCategory } from '../types'
 
 interface LobbyPageProps {
@@ -11,8 +12,9 @@ interface LobbyPageProps {
 export const LobbyPage: React.FC<LobbyPageProps> = ({ onSelectBusiness }) => {
   const [activeCategory, setActiveCategory] = useState<BusinessCategory | 'all'>('all')
   const [search, setSearch] = useState('')
+  const { businesses, loading } = useLiveBusinesses()
 
-  const filtered = BUSINESSES.filter(b => {
+  const filtered = businesses.filter(b => {
     const matchCat = activeCategory === 'all' || b.category === activeCategory
     const matchSearch = b.name.toLowerCase().includes(search.toLowerCase()) ||
                         b.address.toLowerCase().includes(search.toLowerCase())

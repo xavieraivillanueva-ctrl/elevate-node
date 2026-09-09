@@ -39,8 +39,8 @@ interface BusinessPageProps {
 }
 
 export const BusinessPage: React.FC<BusinessPageProps> = ({ businessId, onBack, tab, onTabChange, userId, userName }) => {
-  const fallbackBiz = BUSINESSES.find(b => b.id === businessId) || BUSINESSES[0]
-  const { business: liveBiz } = useLiveBusiness(fallbackBiz.slug)
+  const { business: liveBiz, loading: bizLoading } = useLiveBusiness(businessId)
+  const fallbackBiz = BUSINESSES.find(b => b.id === businessId || b.slug === businessId) || BUSINESSES[0]
   const biz = liveBiz || fallbackBiz
 
   const [step, setStep] = useState<Step>('home')
@@ -474,7 +474,11 @@ export const BusinessPage: React.FC<BusinessPageProps> = ({ businessId, onBack, 
         <div className="px-5 pt-5">
           <button
             onClick={() => setStep('step1')}
-            className="btn-cta w-full py-4 rounded-2xl text-base flex items-center justify-center gap-3"
+            style={{
+              backgroundColor: biz.accentColor || '#D4A017',
+              color: biz.primaryColor || '#0A1628'
+            }}
+            className="w-full py-4 rounded-2xl text-base font-black flex items-center justify-center gap-3 shadow-lg hover:brightness-105 active:scale-[0.98] transition cursor-pointer"
           >
             <Calendar className="w-5 h-5" />
             <span>{biz.ctaText}</span>
@@ -484,7 +488,7 @@ export const BusinessPage: React.FC<BusinessPageProps> = ({ businessId, onBack, 
         {/* Footer */}
         <div className="text-center pt-6 pb-4">
           <p className="text-[10px] text-[#A0ADB8] tracking-wider uppercase">
-            ELEVATE NODE | PLATAFORMA TECH PARA BARBERÍAS | www.elevatenode.com
+            ELEVATE NODE · PLATAFORMA DE GESTIÓN Y RESERVAS · ELEVATENODE.COM
           </p>
         </div>
       </main>

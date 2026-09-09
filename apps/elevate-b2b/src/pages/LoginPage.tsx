@@ -6,7 +6,7 @@ import { supabase } from '../lib/supabase'
 interface LoginPageProps {
   onLogin: (
     partner: { name: string; business: string; email: string },
-    targetSection?: 'cockpit' | 'servicios' | 'staff' | 'contabilidad' | 'inventario' | 'ajustes'
+    targetSection?: 'cockpit' | 'escaparate' | 'servicios' | 'staff' | 'contabilidad' | 'inventario' | 'ajustes'
   ) => void
 }
 
@@ -90,25 +90,25 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
         setErrorMsg(error.message)
         setLoading(false)
       } else {
-        // Redirección inmediata a la ventana de configuración (Ajustes)
+        // Redirección inmediata a la ventana de Storefront Studio (Escaparate B2C)
         onLogin(
           {
             name: businessName.trim(),
             business: businessName.trim(),
             email: data?.user?.email || email,
           },
-          'ajustes'
+          'escaparate'
         )
       }
     } catch (err: any) {
-      // Si ocurre cualquier contingencia, permitir acceso inmediato a configuración
+      // Si ocurre cualquier contingencia, permitir acceso inmediato a escaparate
       onLogin(
         {
           name: businessName.trim(),
           business: businessName.trim(),
           email,
         },
-        'ajustes'
+        'escaparate'
       )
     } finally {
       setLoading(false)

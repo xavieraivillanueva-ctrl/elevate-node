@@ -1,6 +1,16 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 
+export interface PromoBanner {
+  id: string
+  title: string
+  subtitle: string
+  tag?: string
+  price?: string
+  imageUrl?: string
+  bgStyle?: 'gold' | 'navy' | 'teal'
+}
+
 export interface BusinessConfig {
   id: string
   name: string
@@ -12,6 +22,11 @@ export interface BusinessConfig {
   isOpen: boolean
   clabePayout?: string
   bannerUrl?: string
+  logoUrl?: string
+  primaryColor?: string
+  accentColor?: string
+  ctaText?: string
+  promoBanners?: PromoBanner[]
 }
 
 export function useBusinessConfig(businessId?: string) {
@@ -27,8 +42,22 @@ export function useBusinessConfig(businessId?: string) {
       let query = supabase.from('businesses').select('*')
       if (businessId) {
         query = query.eq('id', businessId)
+      } else {
+        // Intentar obtener el negocio asociado al usuario autenticado
+        const { data: userData } = await supabase.auth.getUser()
+        if (userData?.user?.id) {
+          const { data: ownerRecord } = await supabase
+            .from('business_owners')
+            .select('business_id')
+            .eq('user_id', userData.user.id)
+            .maybeSingle()
+
+          if (ownerRecord?.business_id) {
+            query = query.eq('id', ownerRecord.business_id)
+          }
+        }
       }
-      const { data, error: sbError } = await query.limit(1).maybeSingle()
+      const { data, error: sbError } = await query.order('created_at', { ascending: false }).limit(1).maybeSingle()
 
       if (sbError) throw sbError
       if (data) {
@@ -43,6 +72,11 @@ export function useBusinessConfig(businessId?: string) {
           isOpen: data.is_open,
           clabePayout: data.clabe_payout,
           bannerUrl: data.theme_config?.banner_url || undefined,
+          logoUrl: data.theme_config?.logo_url || undefined,
+          primaryColor: data.theme_config?.primary_color || undefined,
+          accentColor: data.theme_config?.accent_color || undefined,
+          ctaText: data.theme_config?.cta_text || undefined,
+          promoBanners: data.theme_config?.banners || [],
         })
       }
     } catch (err: any) {
@@ -169,6 +203,58 @@ export function useBusinessConfig(businessId?: string) {
     }
   }
 
+  // Mutación: Actualizar configuración del Escaparate B2C (Storefront Studio)
+  const updateStorefrontConfig = async (config: {
+    primaryColor?: string
+    accentColor?: string
+    ctaText?: string
+    logoUrl?: string
+    bannerUrl?: string
+    promoBanners?: PromoBanner[]
+  }) => {
+    if (!business?.id) return false
+    setSaving(true)
+    try {
+      const { data: currentData } = await supabase
+        .from('businesses')
+        .select('theme_config')
+        .eq('id', business.id)
+        .single()
+
+      const updatedTheme = {
+        ...(currentData?.theme_config || {}),
+        ...(config.primaryColor ? { primary_color: config.primaryColor } : {}),
+        ...(config.accentColor ? { accent_color: config.accentColor } : {}),
+        ...(config.ctaText ? { cta_text: config.ctaText } : {}),
+        ...(config.logoUrl ? { logo_url: config.logoUrl } : {}),
+        ...(config.bannerUrl ? { banner_url: config.bannerUrl } : {}),
+        ...(config.promoBanners ? { banners: config.promoBanners } : {}),
+      }
+
+      const { error: updateError } = await supabase
+        .from('businesses')
+        .update({ theme_config: updatedTheme, updated_at: new Date().toISOString() })
+        .eq('id', business.id)
+
+      if (updateError) throw updateError
+      setBusiness(prev => prev ? {
+        ...prev,
+        primaryColor: config.primaryColor ?? prev.primaryColor,
+        accentColor: config.accentColor ?? prev.accentColor,
+        ctaText: config.ctaText ?? prev.ctaText,
+        logoUrl: config.logoUrl ?? prev.logoUrl,
+        bannerUrl: config.bannerUrl ?? prev.bannerUrl,
+        promoBanners: config.promoBanners ?? prev.promoBanners,
+      } : null)
+      return true
+    } catch (err: any) {
+      setError(err.message)
+      return false
+    } finally {
+      setSaving(false)
+    }
+  }
+
   return {
     business,
     loading,
@@ -179,6 +265,7 @@ export function useBusinessConfig(businessId?: string) {
     updateBusinessProfile,
     updateClabePayout,
     updateBannerUrl,
+    updateStorefrontConfig,
     refetch: fetchConfig,
   }
 }
