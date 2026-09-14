@@ -22,9 +22,18 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onGuestLogin }) => {
     setErrorMsg('')
     
     if (isRegister) {
-      const { error } = await supabase.auth.signUp({ email, password })
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            name: name || email.split('@')[0],
+            role: 'client',
+          },
+        },
+      })
       if (error) setErrorMsg(error.message)
-      else setErrorMsg('Revisa tu correo para verificar tu cuenta (o simplemente inicia sesión si el autoconfirm está activado).')
+      else setErrorMsg('Cuenta creada con éxito. Si no inicia sesión automáticamente, revisa tu correo o inicia sesión con tu contraseña.')
     } else {
       const { error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) setErrorMsg(error.message)
