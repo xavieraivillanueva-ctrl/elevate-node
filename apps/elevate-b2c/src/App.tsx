@@ -39,8 +39,13 @@ export default function App() {
   const handleSelectBiz = (id: string) => { setSelectedBiz(id); setView('business') }
   const handleBack = () => { setSelectedBiz(null); setView('lobby') }
 
+  const handleGuestLogin = () => {
+    setUser({ id: 'demo-user-guest', email: 'invitado@elevatenode.com' })
+    setView('lobby')
+  }
+
   if (loading) return <div className="min-h-screen bg-[#F0F2F5] flex items-center justify-center text-[#0A1628]">Cargando...</div>
-  if (view === 'login') return <LoginPage />
+  if (view === 'login') return <LoginPage onGuestLogin={handleGuestLogin} />
 
   return (
     <div className="relative min-h-screen">
