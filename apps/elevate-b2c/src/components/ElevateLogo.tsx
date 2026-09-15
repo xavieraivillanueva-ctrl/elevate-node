@@ -10,15 +10,51 @@ interface ElevateLogoProps {
 }
 
 const sizes = {
-  sm: { iconH: 'h-6',  text: 'text-sm',   sub: 'text-[9px]' },
-  md: { iconH: 'h-8',  text: 'text-base', sub: 'text-[10px]' },
-  lg: { iconH: 'h-11', text: 'text-xl',   sub: 'text-xs' },
-  xl: { iconH: 'h-14', text: 'text-2xl',  sub: 'text-sm' },
+  sm: { iconH: 20, text: 'text-sm',   sub: 'text-[9px]' },
+  md: { iconH: 28, text: 'text-base', sub: 'text-[10px]' },
+  lg: { iconH: 36, text: 'text-xl',   sub: 'text-xs' },
+  xl: { iconH: 48, text: 'text-2xl',  sub: 'text-sm' },
 }
 
+/** Emblema SVG inline — nunca depende de archivos externos */
+const Emblem: React.FC<{ size: number; isDark: boolean }> = ({ size, isDark }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 100 100"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    style={{ flexShrink: 0 }}
+  >
+    {/* Hexágono exterior */}
+    <polygon
+      points="50,4 93,27 93,73 50,96 7,73 7,27"
+      fill={isDark ? '#D4A017' : '#0A1628'}
+      opacity="0.12"
+    />
+    <polygon
+      points="50,4 93,27 93,73 50,96 7,73 7,27"
+      fill="none"
+      stroke={isDark ? '#D4A017' : '#0A1628'}
+      strokeWidth="3"
+    />
+    {/* Letra E estilizada */}
+    <text
+      x="50"
+      y="68"
+      textAnchor="middle"
+      fontFamily="Arial, sans-serif"
+      fontWeight="900"
+      fontSize="54"
+      fill={isDark ? '#D4A017' : '#0A1628'}
+    >E</text>
+    {/* Punto dorado decorativo */}
+    <circle cx="72" cy="30" r="5" fill="#D4A017" />
+  </svg>
+)
+
 /**
- * Logotipo Oficial de Elevate Node.
- * Emblema extraído con transparencia pura (sin fondos ni texturas) y tipografía geométrica exacta.
+ * Logotipo Oficial de Elevate Node — SVG inline, sin dependencias externas.
  */
 export const ElevateLogo: React.FC<ElevateLogoProps> = ({
   variant = 'light',
@@ -30,27 +66,16 @@ export const ElevateLogo: React.FC<ElevateLogoProps> = ({
 }) => {
   const s = sizes[size]
   const isDark = variant === 'dark'
+  const textColor = isDark ? 'text-white' : 'text-[#0A1628]'
 
-  // Si se solicita únicamente el emblema
   if (layout === 'emblem-only') {
-    return (
-      <img
-        src="/elevate-node-emblem.png"
-        alt="Elevate Node Icon"
-        className={`${s.iconH} w-auto object-contain shrink-0 ${className}`}
-      />
-    )
+    return <Emblem size={s.iconH} isDark={isDark} />
   }
 
-  // Si se solicita layout apilado vertical
   if (layout === 'stacked') {
     return (
       <div className={`inline-flex flex-col items-center select-none ${className}`}>
-        <img
-          src={isDark ? '/elevate-node-logo-white.png' : '/elevate-node-logo.png'}
-          alt="Elevate Node"
-          className={`${s.iconH} w-auto object-contain shrink-0`}
-        />
+        <Emblem size={s.iconH * 2} isDark={isDark} />
         {showTagline && tagline && (
           <span className={`font-bold tracking-[0.18em] uppercase mt-1 ${s.sub} text-[#D4A017]`}>
             {tagline}
@@ -60,27 +85,19 @@ export const ElevateLogo: React.FC<ElevateLogoProps> = ({
     )
   }
 
-  // Layout horizontal estándar: Emblema extraído a la izquierda + Texto alineado a la derecha
+  // Layout horizontal estándar
   return (
     <div className={`inline-flex items-center gap-2.5 select-none ${className}`}>
-      <img
-        src="/elevate-node-emblem.png"
-        alt="Elevate Node Emblem"
-        className={`${s.iconH} w-auto object-contain shrink-0 drop-shadow-sm`}
-      />
+      <Emblem size={s.iconH} isDark={isDark} />
       <div className="flex flex-col justify-center">
         <span
-          className={`font-black tracking-tight leading-none uppercase ${s.text} ${
-            isDark ? 'text-white' : 'text-[#0A1628]'
-          }`}
+          className={`font-black tracking-tight leading-none uppercase ${s.text} ${textColor}`}
           style={{ letterSpacing: '0.04em' }}
         >
           ELEVATE NODE
         </span>
         {showTagline && tagline && (
-          <span
-            className={`font-bold tracking-[0.18em] uppercase leading-tight mt-0.5 ${s.sub} text-[#D4A017]`}
-          >
+          <span className={`font-bold tracking-[0.18em] uppercase leading-tight mt-0.5 ${s.sub} text-[#D4A017]`}>
             {tagline}
           </span>
         )}
@@ -88,3 +105,4 @@ export const ElevateLogo: React.FC<ElevateLogoProps> = ({
     </div>
   )
 }
+

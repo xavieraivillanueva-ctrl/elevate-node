@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { BUSINESSES as fallbackBusinesses } from '../data/businesses'
 import type { Business } from '../types'
@@ -103,7 +103,10 @@ export function useLiveBusinesses() {
         }
       })
 
-      setBusinesses(mapped)
+      // Combinar: negocios reales de Supabase + negocios demo locales (sin duplicar)
+      const supabaseIds = new Set(mapped.map(b => b.id))
+      const extras = fallbackBusinesses.filter(fb => !supabaseIds.has(fb.id))
+      setBusinesses([...mapped, ...extras])
     } catch (err) {
       console.error('Error cargando negocios vivos:', err)
       setBusinesses(fallbackBusinesses)
