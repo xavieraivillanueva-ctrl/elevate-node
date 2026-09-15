@@ -9,7 +9,7 @@ import { loadStripe } from '@stripe/stripe-js'
 import { Elements } from '@stripe/react-stripe-js'
 import { StripePaymentForm } from '../components/StripePaymentForm'
 
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '')
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || 'pk_test_51UCqOqAMrAU1l0PotMfpQp5haTWh2b0FhADxJ0U8LadXkDWI1GRCnFO8JnaKxVRYZiSUngJ2tEsf4ySjwsR5Lhl500tRz30oOR')
 
 type Step = 'home' | 'step1' | 'step2' | 'step3' | 'step4' | 'step5'
 
