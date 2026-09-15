@@ -1,0 +1,5 @@
+﻿# Este repo usa deploy manual via CLI (vercel deploy --prebuilt)
+# El build de GitHub Integration esta deshabilitado intencionalmente
+apps/elevate-b2c/node_modules
+apps/elevate-b2b/node_modules
+node_modules
